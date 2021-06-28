@@ -257,16 +257,26 @@ def read_all_hdf5(quantity, prtcl_type_num, filename_pref):
     # h5file = tables.open_file(filename)
     h5file = h5py.File(filename, 'r')
     N = h5file['Header'].attrs['NumFilesPerSnapshot']
-    print(filename, h5file, list(h5file.keys()))
-    data_list = []
+    Npart = h5file['Header'].attrs['NumPart_Total'][int(prtcl_type_num)]
+    Npart_this = h5file['Header'].attrs['NumPart_ThisFile']
+    arrshp1 = int(h5file[f'PartType{prtcl_type_num:d}'][quantity].shape[1])
+    print(filename, h5file, list(h5file.keys()),(Npart,arrshp1), arrshp1)
+    h5file.close()
+    # data_list = []
+    data_array = np.zeros(shape=(Npart,arrshp1))
+    Prt_istart = 0
     while i<N:
         filename = filename_pref + f'.{i:d}.hdf5'
         h5file = h5py.File(filename, 'r')
-        data_list.append( h5file[f'PartType{prtcl_type_num:d}'][quantity] )
+        Prt_istop = Prt_istart + h5file['Header'].attrs['NumPart_ThisFile'][int(prtcl_type_num)]
+        data_array[Prt_istart:Prt_istop] = h5file[f'PartType{prtcl_type_num:d}'][quantity]
+        print(h5file.filename, Prt_istop-Prt_istart)
+        Prt_istart = Prt_istop
         i+=1
-    combined = np.concatenate(data_list, axis=0)
-    h5file.close()
-    return combined
+        h5file.close()
+    # combined = np.concatenate(data_list, axis=0)
+    # h5file.close()
+    return data_array
         
 
 
