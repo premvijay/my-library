@@ -1,5 +1,5 @@
 #include <iostream>
-
+// #include <math.h>
 #include <cmath>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -10,6 +10,10 @@ namespace py = pybind11;
 // float W_ngp(float diff){
 // return 1;
 // };
+
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 float W_cic(float diff){
     float d = std::abs(diff);

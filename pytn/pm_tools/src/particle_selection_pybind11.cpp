@@ -10,7 +10,7 @@ namespace py = pybind11;
 
 py::array_t<bool> within_sphere ( py::array_t<float> posd, float cenx, float ceny, float cenz, float rad, float box_size) {
     auto posd_unckd = posd.unchecked<2>();
-    py::size_t num_prtcl = posd.shape(0);
+    py::ssize_t num_prtcl = posd.shape(0);
 
     py::array_t<bool> selection({num_prtcl},0);
     auto selection_mut_unckd = selection.mutable_unchecked<1>();
@@ -32,7 +32,7 @@ py::array_t<bool> within_sphere ( py::array_t<float> posd, float cenx, float cen
 
 py::array_t<bool> within_cube ( py::array_t<float> posd, float cenx, float ceny, float cenz, float side, float box_size) {
     auto posd_unckd = posd.unchecked<2>();
-    py::size_t num_prtcl = posd.shape(0);
+    py::ssize_t num_prtcl = posd.shape(0);
 
     py::array_t<bool> selection({num_prtcl},0);
     auto selection_mut_unckd = selection.mutable_unchecked<1>();

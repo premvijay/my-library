@@ -1,2 +1,5 @@
 *.pyc
 pytn/pm_tools/src/pybind11
+*.pyd
+*.json
+pytn/pm_tools/build/
