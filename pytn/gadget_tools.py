@@ -64,7 +64,8 @@ class Snapshot():
             # # self.num_part_types   = h5file['Config'].attrs['NTYPES']
             # self.params           = h5file['Parameters'].attrs
 
-            self.h5file = h5file
+            # self.h5file = h5file
+            h5file.close()
 
         self.prtcl_types = ["Gas","Halo","Disk",  "Bulge", "Stars", "Bndry"]
         
@@ -249,18 +250,23 @@ def read_partIDs_all_files(snapshot_filepath_prefix,downsample=1, rand_seed=10, 
 
 def read_all_hdf5(quantity, prtcl_type_num, filename_pref):
     import h5py
+    # import tables
     prtcl_type_str = 'PartType'+str(int(prtcl_type_num))
     i=0
     filename = filename_pref + f'.{i:d}.hdf5'
+    # h5file = tables.open_file(filename)
     h5file = h5py.File(filename, 'r')
     N = h5file['Header'].attrs['NumFilesPerSnapshot']
+    print(filename, h5file, list(h5file.keys()))
     data_list = []
     while i<N:
         filename = filename_pref + f'.{i:d}.hdf5'
         h5file = h5py.File(filename, 'r')
         data_list.append( h5file[f'PartType{prtcl_type_num:d}'][quantity] )
         i+=1
-    return np.concatenate(data_list, axis=0)
+    combined = np.concatenate(data_list, axis=0)
+    h5file.close()
+    return combined
         
 
 
