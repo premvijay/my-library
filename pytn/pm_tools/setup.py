@@ -5,11 +5,11 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 ext_modules = [
     Pybind11Extension(
         "particles_to_grid",
-        ["src/grid_assign_pybind11.cpp"]),
+        ["src/grid_assign_pybind11.cpp"],
     ),
     Pybind11Extension(
         "select_particles",
-        ["src/particle_selection_pybind11.cpp"]),
+        ["src/particle_selection_pybind11.cpp"],
     ),
 ]
 
