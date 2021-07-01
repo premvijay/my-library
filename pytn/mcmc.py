@@ -34,10 +34,10 @@ def gaussian_mcmc(hops,mu,sigma):
     return states[burn_in:]
 
 # %%
-def sample_mpolis(hops,pdf):
+def sample_mpolis(hops,pdf, scale):
     states = []
     burn_in = int(hops*0.2)
-    mark_kernel = lambda : random.uniform(-5,5)
+    mark_kernel = lambda : random.uniform(-scale,scale)
     # mark_kernel = lambda : random.standard_normal(1)
     current = mark_kernel()
     for i in range(hops):
