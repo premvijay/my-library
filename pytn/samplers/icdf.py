@@ -6,12 +6,12 @@ from scipy.interpolate import interp1d
 
 # %%
 from numpy.random import default_rng
-rng = default_rng()
+
 
 # %%
 import matplotlib.pyplot as plt
 #%%
-def sample_cdf(N, cdf,  dens_interval=(-5,5), use_scipy=False):
+def sample_cdf(N, cdf,  dens_interval=(-5,5), use_scipy=False, seed=None):
     if use_scipy==True:
         rvc = st.rv_continuous()
         rvc._cdf = cdf
@@ -19,6 +19,7 @@ def sample_cdf(N, cdf,  dens_interval=(-5,5), use_scipy=False):
     else:
         r = np.linspace(*dens_interval, 100000)
         icdf = interp1d(cdf(r),r)
+        rng = default_rng(seed=seed)
         return icdf(rng.random(N))
 
 
