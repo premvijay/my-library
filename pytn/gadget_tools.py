@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import os
 import gc
@@ -274,32 +275,42 @@ def read_partIDs_all_files(snapshot_filepath_prefix,downsample=1, rand_seed=10, 
     return pID
 
 
-def read_all_hdf5(quantity, prtcl_type_num, filename_pref):
+def read_all_hdf5(quantity, prtcl_type_nums, filename_pref):
     import h5py
     # import tables
-    prtcl_type_str = 'PartType'+str(int(prtcl_type_num))
+    # prtcl_type_str = 'PartType'+str(int(prtcl_type_num))
+
+    if not isinstance(prtcl_type_nums, (list, tuple, np.ndarray)):
+        prtcl_type_nums = (prtcl_type_nums,)
+
     i=0
     filename = filename_pref + f'.{i:d}.hdf5'
     # h5file = tables.open_file(filename)
     h5file = h5py.File(filename, 'r')
     N = h5file['Header'].attrs['NumFilesPerSnapshot']
-    Npart = h5file['Header'].attrs['NumPart_Total'][int(prtcl_type_num)]
+    Npart = int(sum([ h5file['Header'].attrs['NumPart_Total'][int(prtcl_type_num)] for prtcl_type_num in prtcl_type_nums ]))
     Npart_this = h5file['Header'].attrs['NumPart_ThisFile']
-    arrshp1 = int(h5file[f'PartType{prtcl_type_num:d}'][quantity].shape[1])
-    print(filename, h5file, list(h5file.keys()),(Npart,arrshp1), arrshp1)
+    arrshp = list(h5file[f'PartType{prtcl_type_nums[0]:d}'][quantity].shape)
+    print(filename, h5file, list(h5file.keys()),arrshp)
     h5file.close()
+    arrshp[0] = Npart
+    # if arrshp ==1:
+    data_array = np.zeros(shape=arrshp)
+    
+    
     # data_list = []
-    data_array = np.zeros(shape=(Npart,arrshp1))
+    
     Prt_istart = 0
     while i<N:
-        filename = filename_pref + f'.{i:d}.hdf5'
-        h5file = h5py.File(filename, 'r')
-        Prt_istop = Prt_istart + h5file['Header'].attrs['NumPart_ThisFile'][int(prtcl_type_num)]
-        data_array[Prt_istart:Prt_istop] = h5file[f'PartType{prtcl_type_num:d}'][quantity]
-        print(h5file.filename, Prt_istop-Prt_istart)
-        Prt_istart = Prt_istop
-        i+=1
-        h5file.close()
+        for prtcl_type_num in prtcl_type_nums:
+            filename = filename_pref + f'.{i:d}.hdf5'
+            with h5py.File(filename, 'r') as h5file:
+                Prt_istop = Prt_istart + h5file['Header'].attrs['NumPart_ThisFile'][int(prtcl_type_num)]
+                data_array[Prt_istart:Prt_istop] = h5file[f'PartType{prtcl_type_num:d}'][quantity]
+                print(h5file.filename, Prt_istop-Prt_istart)
+                Prt_istart = Prt_istop
+                i+=1
+            # h5file.close()
     # combined = np.concatenate(data_list, axis=0)
     # h5file.close()
     return data_array
@@ -362,25 +373,6 @@ def read_all_hdf5(quantity, prtcl_type_num, filename_pref):
 
 
 # def downsample()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
