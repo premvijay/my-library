@@ -3,7 +3,8 @@ import os
 import gc
 
 class Snapshot():
-    def __init__(self, snapfile=None, hdf5_support='True'):
+    def __init__(self, snapfile=None, snapfrmt='gadget4', hdf5_support='True'):
+        self.snapfrmt = snapfrmt
         if hdf5_support:
             import h5py
             self.h5py = h5py
@@ -49,7 +50,7 @@ class Snapshot():
             header_size_end = np.fromfile(file, dtype = np.int32, count =1)[0]
             print ('Header block is read and it contains ', header_size_end, 'bytes.')
             
-        elif self.filetype == 'gadget_hdf5':
+        elif self.filetype == 'gadget_hdf5' and self.snapfrmt=='gadget4':
             h5file = self.h5py.File(self.filename, 'r')
             self.N_prtcl_thisfile = h5file['Header'].attrs['NumPart_ThisFile']    ## The number of particles of each type present in the file
             self.mass_table       = h5file['Header'].attrs['MassTable']     ## Gives the mass of different particles
@@ -58,14 +59,33 @@ class Snapshot():
             self.N_prtcl_total    = h5file['Header'].attrs['NumPart_Total']   ## Total number of each particle present in the simulation
             self.num_files        = h5file['Header'].attrs['NumFilesPerSnapshot'] ## Number of files in each snapshot
             self.box_size         = h5file['Header'].attrs['BoxSize']  ## Gives the box size if periodic boundary conditions are used
-            # self.Omega_m_0        = h5file['Parameters'].attrs['Omega0']     ## Matter density at z = 0 in the units of critical density
-            # self.Omega_Lam_0      = h5file['Parameters'].attrs['OmegaLambda'] ## Vacuum Energy Density at z=0 in the units of critical density
-            # self.Hubble_param     = h5file['Parameters'].attrs['HubbleParam'] ## gives the hubble constant in units of 100 kms^-1Mpc^-1  
+            self.Omega_m_0        = h5file['Parameters'].attrs['Omega0']     ## Matter density at z = 0 in the units of critical density
+            self.Omega_Lam_0      = h5file['Parameters'].attrs['OmegaLambda'] ## Vacuum Energy Density at z=0 in the units of critical density
+            self.Hubble_param     = h5file['Parameters'].attrs['HubbleParam'] ## gives the hubble constant in units of 100 kms^-1Mpc^-1  
             # # self.num_part_types   = h5file['Config'].attrs['NTYPES']
             # self.params           = h5file['Parameters'].attrs
 
             # self.h5file = h5file
             h5file.close()
+        
+        elif self.snapfrmt=='swift':
+            h5file = self.h5py.File(self.filename, 'r')
+            self.N_prtcl_thisfile = h5file['Header'].attrs['NumPart_ThisFile']    ## The number of particles of each type present in the file
+            self.mass_table       = h5file['Header'].attrs['MassTable']     ## Gives the mass of different particles
+            self.scale_factor     = h5file['Header'].attrs['Time']   ##Time of output,  or expansion factor for cosmological simulations
+            self.redshift         = h5file['Header'].attrs['Redshift']   ## Redshift of the snapshot
+            self.N_prtcl_total    = h5file['Header'].attrs['NumPart_Total']   ## Total number of each particle present in the simulation
+            self.num_files        = h5file['Header'].attrs['NumFilesPerSnapshot'] ## Number of files in each snapshot
+            self.box_size         = h5file['Header'].attrs['BoxSize'][0] / h5file['InternalCodeUnits'].attrs['Unit length in cgs (U_L)']  ## Gives the box size if periodic boundary conditions are used
+            self.Omega_m_0        = h5file['Cosmology'].attrs['Omega_m']     ## Matter density at z = 0 in the units of critical density
+            self.Omega_Lam_0      = h5file['Cosmology'].attrs['Omega_lambda']  ## Vacuum Energy Density at z=0 in the units of critical density
+            self.Hubble_param     = h5file['Cosmology'].attrs['h']  ## gives the hubble constant in units of 100 kms^-1Mpc^-1  
+            # # self.num_part_types   = h5file['Config'].attrs['NTYPES']
+            # self.params           = h5file['Parameters'].attrs
+
+            # self.h5file = h5file
+            h5file.close()
+
 
         self.prtcl_types = ["Gas","Halo","Disk",  "Bulge", "Stars", "Bndry"]
         
@@ -90,10 +110,14 @@ class Snapshot():
             return posd
 
         elif self.filetype == 'gadget_hdf5':
-            # h5file = self.h5py.File(self.filename, 'r')
+            h5file = self.h5py.File(self.filename, 'r')
             # if prtcl_type=="Halo": 
             type_num = self.prtcl_types.index(prtcl_type)
-            return self.h5file[f'PartType{type_num:d}']['Coordinates'][:]
+            pos_th = h5file[f'PartType{type_num:d}']['Coordinates'][:] #/ h5file['InternalCodeUnits'].attrs['Unit length in cgs (U_L)']
+            h5file.close()
+            if self.snapfrmt=='swift':
+                pos_th /= h5file['InternalCodeUnits'].attrs['Unit length in cgs (U_L)']
+            return pos_th
 
     def velocities(self, prtcl_type="Halo",max_prtcl=None):
         if self.filetype == 'gadget_binary':
@@ -116,10 +140,12 @@ class Snapshot():
             return veld
 
         elif self.filetype == 'gadget_hdf5':
-            # h5file = self.h5py.File(self.filename, 'r')
+            h5file = self.h5py.File(self.filename, 'r')
             # if prtcl_type=="Halo": 
             type_num = self.prtcl_types.index(prtcl_type)
-            return self.h5file[f'PartType{type_num:d}']['Velocities'][:]
+            vel_th = h5file[f'PartType{type_num:d}']['Velocities'][:]
+            h5file.close()
+            return vel_th
 
     def IDs(self, prtcl_type="Halo",max_prtcl=None):
         if self.filetype == 'gadget_binary':
