@@ -73,8 +73,8 @@ class Snapshot():
             h5file = self.h5py.File(self.filename, 'r')
             self.unitlen = h5file['InternalCodeUnits'].attrs['Unit length in cgs (U_L)']
             self.N_prtcl_thisfile = h5file['Header'].attrs['NumPart_ThisFile']    ## The number of particles of each type present in the file
-            self.mass_table       = h5file['Header'].attrs['MassTable']     ## Gives the mass of different particles
-            self.scale_factor     = h5file['Header'].attrs['Time']   ##Time of output,  or expansion factor for cosmological simulations
+            self.mass_table       = h5file['Header'].attrs['InitialMassTable']     ## Gives the mass of different particles
+            self.scale_factor     = h5file['Header'].attrs['Scale-factor']   ##Time of output,  or expansion factor for cosmological simulations
             self.redshift         = np.asscalar(h5file['Header'].attrs['Redshift'])   ## Redshift of the snapshot
             self.N_prtcl_total    = h5file['Header'].attrs['NumPart_Total']   ## Total number of each particle present in the simulation
             self.num_files        = h5file['Header'].attrs['NumFilesPerSnapshot'] ## Number of files in each snapshot
