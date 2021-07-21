@@ -6,7 +6,8 @@ import numpy as np
 def assign_density(pos, box_size, grid_size = 512, scheme='CIC', shift=0, overdensity=True):
     # pos *= grid_size / box_size    # This happens without using extra memory
     # pos += shift
-    assert (pos <= box_size).all()
+    print(pos.max(axis=0),box_size)
+    assert (pos <= box_size*1.02).all()
     pos_scaled_to_grid_units = pos * grid_size / box_size + shift
     # pos_scaled_to_grid_units += shift
     # print(pos_scaled_to_grid_units)
