@@ -16,14 +16,32 @@ def potential_matches(hals1_pos, hals2_pos, box_size=1000):
     return idx21
 
 
-def matching_frac(pid1, pid2):
-    max_num = 1000
-    pid1_smpl = np.random.choice(pid1, max_num)
-    pid2_smpl = np.random.choice(pid2, max_num)
-    frac1 = np.count_nonzero(np.in1d(pid1_smpl, pid2, assume_unique=True)) / pid1_smpl.size
+def matching_frac(pid1, pid2, max_num = 1000):
+    pid1_smpl = np.random.choice(pid1, max_num, replace=False)
+    pid2_smpl = np.random.choice(pid2, max_num, replace=False)
+    pid1_smpl.sort(); pid1_smpl.sort(); pid1.sort(); pid2.sort()
+    # print(pid1_smpl)
+    # match21_1 = np.count_nonzero(np.isin(pid1_smpl[:max_num//2], pid2, assume_unique=True)) 
+    # match21_2 = np.count_nonzero(np.isin(pid1_smpl[max_num//2:], pid2, assume_unique=True))
+    match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
+    # print(match21, match21_1+match21_2)
+    frac1 = match21 / pid1_smpl.size
     frac2 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))/ pid2_smpl.size
-    return frac1*frac2
+    return (frac1,frac2)
 
+
+def matching_frac1(pid1, pid2, max_num = 1000):
+    pid1_smpl = np.random.choice(pid1, max_num, replace=False)
+    pid2_smpl = np.random.choice(pid2, max_num, replace=False)
+    pid1_smpl.sort(); pid1_smpl.sort(); pid1.sort(); pid2.sort()
+    print(pid1_smpl)
+    match21_1 = len(set(pid1_smpl[:max_num//2])&set(pid2)) 
+    match21_2 = len(set(pid1_smpl[max_num//2:])&set(pid2))
+    match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
+    print(match21, match21_1+match21_2)
+    frac1 = match21 / pid1_smpl.size
+    frac2 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))/ pid2_smpl.size
+    return (frac1,frac2)
 
 
 def findin_rs(hal_vr_this, hal_rs_near_in):
