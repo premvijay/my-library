@@ -15,33 +15,81 @@ def potential_matches(hals1_pos, hals2_pos, box_size=1000):
     print(t_now-t_bef, 'query done for spatial neighbours')
     return idx21
 
+def isin(x,s):
+    return x in s
+
+isin_v = np.vectorize(isin, excluded={1})
+
+def in1d_searchsorted(A,B,assume_unique=False):
+    if assume_unique==0:
+        B_ar = np.unique(B)
+    else:
+        B_ar = B
+    idx = np.searchsorted(B_ar,A)
+    idx[idx==len(B_ar)] = 0
+    return B_ar[idx] == A
+
+def isinint(x_ar,y_ar):
+    x,y = np.sort(x_ar), np.sort(y_ar)
+    mina = min(x.min(), y.min())
+    maxa = int(max(x.max(), y.max()) + 1)
+    x = x - mina
+    y = y - mina
+    range_comb = int(maxa-mina)
+    print(maxa, type(maxa), type(x))
+    bool_arx = np.zeros(range_comb, dtype='bool')
+    print(mina, maxa, bool_arx.size)
+    bool_arx[x] = True
+    bool_ary = np.zeros(range_comb, dtype='bool')
+    bool_ary[y] = True
+    return bool_arx & bool_ary #np.count_nonzero()
+    
 
 def matching_frac(pid1, pid2, max_num = 1000):
+    t_now = time()
     pid1_smpl = np.random.choice(pid1, max_num, replace=False)
     pid2_smpl = np.random.choice(pid2, max_num, replace=False)
-    pid1_smpl.sort(); pid1_smpl.sort(); pid1.sort(); pid2.sort()
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, 'sample taken')
+    pid1_smpl.sort(); pid2_smpl.sort(); pid1.sort(); pid2.sort()
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, 'sorted')
     # print(pid1_smpl)
     # match21_1 = np.count_nonzero(np.isin(pid1_smpl[:max_num//2], pid2, assume_unique=True)) 
     # match21_2 = np.count_nonzero(np.isin(pid1_smpl[max_num//2:], pid2, assume_unique=True))
     match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
-    # print(match21, match21_1+match21_2)
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, 'np isin count_nonzero done')
+    # match21 = np.count_nonzero(isinint(pid1_smpl, pid2))
+    # t_bef, t_now = t_now, time()
+    # print(t_now-t_bef, 'my isin count_nonzero done')
+    # match21_py = len(set(pid1_smpl)&set(pid2))
+    # t_bef, t_now = t_now, time()
+    # print(t_now-t_bef, 'py set intersect')
+    # print(match21, match21_py)
+    match12 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, 'np in1d count_nonzero done', match12)
+    match12 = np.count_nonzero(in1d_searchsorted(pid2_smpl, pid1, assume_unique=True))
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, 'searchsort in1d count_nonzero done', match12)
     frac1 = match21 / pid1_smpl.size
-    frac2 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))/ pid2_smpl.size
+    frac2 = match12 / pid2_smpl.size
     return (frac1,frac2)
 
 
-def matching_frac1(pid1, pid2, max_num = 1000):
-    pid1_smpl = np.random.choice(pid1, max_num, replace=False)
-    pid2_smpl = np.random.choice(pid2, max_num, replace=False)
-    pid1_smpl.sort(); pid1_smpl.sort(); pid1.sort(); pid2.sort()
-    print(pid1_smpl)
-    match21_1 = len(set(pid1_smpl[:max_num//2])&set(pid2)) 
-    match21_2 = len(set(pid1_smpl[max_num//2:])&set(pid2))
-    match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
-    print(match21, match21_1+match21_2)
-    frac1 = match21 / pid1_smpl.size
-    frac2 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))/ pid2_smpl.size
-    return (frac1,frac2)
+# def matching_frac1(pid1, pid2, max_num = 1000):
+#     pid1_smpl = np.random.choice(pid1, max_num, replace=False)
+#     pid2_smpl = np.random.choice(pid2, max_num, replace=False)
+#     pid1_smpl.sort(); pid1_smpl.sort(); pid1.sort(); pid2.sort()
+#     print(pid1_smpl)
+#     match21_1 = len(set(pid1_smpl[:max_num//2])&set(pid2)) 
+#     match21_2 = len(set(pid1_smpl[max_num//2:])&set(pid2))
+#     match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
+#     print(match21, match21_1+match21_2)
+#     frac1 = match21 / pid1_smpl.size
+#     frac2 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))/ pid2_smpl.size
+#     return (frac1,frac2)
 
 
 def findin_rs(hal_vr_this, hal_rs_near_in):
