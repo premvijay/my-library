@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.neighbors import KDTree as KDTree_skl
 from scipy.spatial import KDTree as KDTree_sp
 from time import sleep, time
+import numba as nb
+from numpy.random import default_rng
 
 
 def potential_matches(hals1_pos, hals2_pos, box_size=1000):
@@ -15,21 +17,22 @@ def potential_matches(hals1_pos, hals2_pos, box_size=1000):
     print(t_now-t_bef, 'query done for spatial neighbours')
     return idx21
 
-def isin(x,s):
-    return x in s
+# def isin(x,s):
+#     return x in s
 
-isin_v = np.vectorize(isin, excluded={1})
-
-def in1d_searchsorted(A,B,assume_unique=False):
+# isin_v = np.vectorize(isin, excluded={1})
+@nb.jit(parallel=True)
+def in1dlen_searchsorted(A,B,assume_unique=True):
     if assume_unique==0:
         B_ar = np.unique(B)
     else:
         B_ar = B
     idx = np.searchsorted(B_ar,A)
     idx[idx==len(B_ar)] = 0
-    return B_ar[idx] == A
+    return np.count_nonzero(B_ar[idx] == A)
 
-def isinint(x_ar,y_ar):
+@nb.jit(parallel=True)
+def isinlen_int(x_ar,y_ar):
     x,y = np.sort(x_ar), np.sort(y_ar)
     mina = min(x.min(), y.min())
     maxa = int(max(x.max(), y.max()) + 1)
@@ -42,39 +45,69 @@ def isinint(x_ar,y_ar):
     bool_arx[x] = True
     bool_ary = np.zeros(range_comb, dtype='bool')
     bool_ary[y] = True
-    return bool_arx & bool_ary #np.count_nonzero()
+    return np.count_nonzero(bool_arx & bool_ary)
     
+@nb.jit(parallel=True)
+def isinlen_nb(x, y):
+    m = 0
+    for xi in x:
+        if xi in y:
+            m+=1
+    return m
 
-def matching_frac(pid1, pid2, max_num = 1000):
-    t_now = time()
-    pid1_smpl = np.random.choice(pid1, max_num, replace=False)
-    pid2_smpl = np.random.choice(pid2, max_num, replace=False)
-    t_bef, t_now = t_now, time()
-    print(t_now-t_bef, 'sample taken')
-    pid1_smpl.sort(); pid2_smpl.sort(); pid1.sort(); pid2.sort()
-    t_bef, t_now = t_now, time()
-    print(t_now-t_bef, 'sorted')
-    # print(pid1_smpl)
-    # match21_1 = np.count_nonzero(np.isin(pid1_smpl[:max_num//2], pid2, assume_unique=True)) 
-    # match21_2 = np.count_nonzero(np.isin(pid1_smpl[max_num//2:], pid2, assume_unique=True))
-    match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
-    t_bef, t_now = t_now, time()
-    print(t_now-t_bef, 'np isin count_nonzero done')
-    # match21 = np.count_nonzero(isinint(pid1_smpl, pid2))
-    # t_bef, t_now = t_now, time()
-    # print(t_now-t_bef, 'my isin count_nonzero done')
-    # match21_py = len(set(pid1_smpl)&set(pid2))
-    # t_bef, t_now = t_now, time()
-    # print(t_now-t_bef, 'py set intersect')
-    # print(match21, match21_py)
-    match12 = np.count_nonzero(np.in1d(pid2_smpl, pid1, assume_unique=True))
-    t_bef, t_now = t_now, time()
-    print(t_now-t_bef, 'np in1d count_nonzero done', match12)
-    match12 = np.count_nonzero(in1d_searchsorted(pid2_smpl, pid1, assume_unique=True))
-    t_bef, t_now = t_now, time()
-    print(t_now-t_bef, 'searchsort in1d count_nonzero done', match12)
-    frac1 = match21 / pid1_smpl.size
-    frac2 = match12 / pid2_smpl.size
+
+# @nb.jit(parallel=True)
+def matching_frac(pid1, pid2, max_num = 1000, assume_sorted=True):
+    # t_now = time()
+    if not assume_sorted:
+        pid1.sort(); pid2.sort()
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'sorted')
+    if max_num == None:
+        # match = in1dlen_searchsorted(pid1, pid2, assume_unique=True)
+        match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'without sample isin done')
+        # match = isinlen_int(pid1, pid2)
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'without sample isin_int done')
+        frac1 = match/ pid1.size
+        frac2 = match/ pid2.size
+    else:
+        rng = default_rng(seed=10)
+        # randidx = rng.uniform(0,max(pid1.size, pid2[-1].size)-1, max_num)
+        randidx = rng.choice(min(pid1.size, pid2.size)-1, size=max_num, replace=False)
+        randidx.sort()
+        # pid1_smpl = np.random.choice(pid1, max_num, replace=False)
+        # pid2_smpl = np.random.choice(pid2, max_num, replace=False)
+        pid1_smpl = pid1[randidx]
+        pid2_smpl = pid2[randidx]
+        # pid1_smpl.sort(); pid2_smpl.sort()
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'sample taken')
+        # print(pid1_smpl)
+        # match21_1 = np.count_nonzero(np.isin(pid1_smpl[:max_num//2], pid2, assume_unique=True)) 
+        # match21_2 = np.count_nonzero(np.isin(pid1_smpl[max_num//2:], pid2, assume_unique=True))
+        match21 = np.count_nonzero(np.isin(pid1_smpl, pid2, assume_unique=True))
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'np isin count_nonzero done')
+        # match21 = isinlen_int(pid1_smpl, pid2)
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'my isin done')
+        # match21 = np.count_nonzero(isinint(pid1_smpl, pid2))
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'my isin count_nonzero done')
+        # match21_py = len(set(pid1_smpl)&set(pid2))
+        # t_bef, t_now = t_now, time()
+        # print(t_now-t_bef, 'py set intersect')
+        # print(match21, match21_py)
+        match12 = np.count_nonzero(np.isin(pid2_smpl, pid1, assume_unique=True))
+        # t_bef, t_now = t_now, time()
+        # # print(t_now-t_bef, 'np isin count_nonzero done', match12)
+        # print(t_now-t_bef, 'with sample isin done')
+        frac1 = match21 / pid1_smpl.size
+        frac2 = match12 / pid2_smpl.size
+
     return (frac1,frac2)
 
 
