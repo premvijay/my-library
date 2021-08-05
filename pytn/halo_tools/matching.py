@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.neighbors import KDTree as KDTree_skl
 from scipy.spatial import KDTree as KDTree_sp
 from time import sleep, time
-import numba as nb
+# import numba as nb
 from numpy.random import default_rng
 
 
@@ -21,7 +21,7 @@ def potential_matches(hals1_pos, hals2_pos, box_size=1000):
 #     return x in s
 
 # isin_v = np.vectorize(isin, excluded={1})
-@nb.jit(parallel=True)
+# @nb.jit(parallel=True)
 def in1dlen_searchsorted(A,B,assume_unique=True):
     if assume_unique==0:
         B_ar = np.unique(B)
@@ -31,30 +31,30 @@ def in1dlen_searchsorted(A,B,assume_unique=True):
     idx[idx==len(B_ar)] = 0
     return np.count_nonzero(B_ar[idx] == A)
 
-@nb.jit(parallel=True)
+# @nb.jit(parallel=True)
 def isinlen_int(x_ar,y_ar):
-    x,y = np.sort(x_ar), np.sort(y_ar)
+    x,y = x_ar, y_ar
     mina = min(x.min(), y.min())
     maxa = int(max(x.max(), y.max()) + 1)
     x = x - mina
     y = y - mina
     range_comb = int(maxa-mina)
-    print(maxa, type(maxa), type(x))
-    bool_arx = np.zeros(range_comb, dtype='bool')
-    print(mina, maxa, bool_arx.size)
-    bool_arx[x] = True
-    bool_ary = np.zeros(range_comb, dtype='bool')
-    bool_ary[y] = True
-    return np.count_nonzero(bool_arx & bool_ary)
+    # print(maxa, type(maxa), type(x))
+    bool_ar = np.zeros(range_comb, dtype='bool')
+    # print(mina, maxa, bool_arx.size)
+    bool_ar[x] = True
+    # bool_ary = np.zeros(range_comb, dtype='bool')
+    # bool_ar[y] *= True
+    return np.count_nonzero(bool_ar[y])
     
-@nb.jit(parallel=True)
+# @nb.jit(parallel=True)
 def isinlen_nb(x, y):
     m = 0
     for xi in x:
         if xi in y:
             m+=1
     return m
-
+    
 
 # @nb.jit(parallel=True)
 def matching_frac(pid1, pid2, max_num = 1000, assume_sorted=True):
@@ -65,10 +65,10 @@ def matching_frac(pid1, pid2, max_num = 1000, assume_sorted=True):
         # print(t_now-t_bef, 'sorted')
     if max_num == None:
         # match = in1dlen_searchsorted(pid1, pid2, assume_unique=True)
-        match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
+        # match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
         # t_bef, t_now = t_now, time()
         # print(t_now-t_bef, 'without sample isin done')
-        # match = isinlen_int(pid1, pid2)
+        match = isinlen_int(pid1, pid2)
         # t_bef, t_now = t_now, time()
         # print(t_now-t_bef, 'without sample isin_int done')
         frac1 = match/ pid1.size
