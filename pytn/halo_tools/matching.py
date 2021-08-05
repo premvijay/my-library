@@ -31,21 +31,26 @@ def in1dlen_searchsorted(A,B,assume_unique=True):
     idx[idx==len(B_ar)] = 0
     return np.count_nonzero(B_ar[idx] == A)
 
-# @nb.jit(parallel=True)
+# @nb.jit(parallel=False) #'int(uint64[:], uint64[:])'
 def isinlen_int(x_ar,y_ar):
+    # t_now = time()
     x,y = x_ar, y_ar
     mina = min(x.min(), y.min())
     maxa = int(max(x.max(), y.max()) + 1)
-    x = x - mina
-    y = y - mina
     range_comb = int(maxa-mina)
     # print(maxa, type(maxa), type(x))
+    # t_bef, t_now = t_now, time()
+    # print(t_now-t_bef, 'bool array params calculated')
     bool_ar = np.zeros(range_comb, dtype='bool')
     # print(mina, maxa, bool_arx.size)
-    bool_ar[x] = True
+    # t_bef, t_now = t_now, time()
+    # print(t_now-t_bef, 'bool array created')
+    bool_ar[x-mina] = True
+    # t_bef, t_now = t_now, time()
+    # print(t_now-t_bef, 'bool array x set')
     # bool_ary = np.zeros(range_comb, dtype='bool')
     # bool_ar[y] *= True
-    return np.count_nonzero(bool_ar[y])
+    return np.count_nonzero(bool_ar[y-mina])
     
 # @nb.jit(parallel=True)
 def isinlen_nb(x, y):
@@ -54,23 +59,37 @@ def isinlen_nb(x, y):
         if xi in y:
             m+=1
     return m
-    
+
+# @nb.njit(parallel=True)
+def matching_frac_boolar(ar1, ar2):
+    x,y = ar1, ar2
+    mina = min(x.min(), y.min())
+    maxa = int(max(x.max(), y.max()) + 1)
+    range_comb = int(maxa-mina)
+    bool_ar = np.zeros(range_comb, dtype='bool')
+    # match = isinlen_int(ar1, ar2)
+    bool_ar[x-mina] = True
+    match = np.count_nonzero(bool_ar[y-mina])
+    return (match/ar1.size, match/ar2.size)
 
 # @nb.jit(parallel=True)
-def matching_frac(pid1, pid2, max_num = 1000, assume_sorted=True):
-    # t_now = time()
-    if not assume_sorted:
+def matching_frac(pid1, pid2, max_num = 1000, use_boolar_alg=True, assume_sorted=True):
+    t_now = time()
+    if not assume_sorted and not use_boolar_alg:
         pid1.sort(); pid2.sort()
         # t_bef, t_now = t_now, time()
         # print(t_now-t_bef, 'sorted')
     if max_num == None:
-        # match = in1dlen_searchsorted(pid1, pid2, assume_unique=True)
-        # match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
-        # t_bef, t_now = t_now, time()
-        # print(t_now-t_bef, 'without sample isin done')
-        match = isinlen_int(pid1, pid2)
-        # t_bef, t_now = t_now, time()
-        # print(t_now-t_bef, 'without sample isin_int done')
+        if use_boolar_alg:
+            match = isinlen_int(pid1, pid2)
+            t_bef, t_now = t_now, time()
+            print(t_now-t_bef, 'without sample isin_int done')
+        else:
+            # match = in1dlen_searchsorted(pid1, pid2, assume_unique=True)
+            match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
+            t_bef, t_now = t_now, time()
+            print(t_now-t_bef, 'without sample isin done')
+
         frac1 = match/ pid1.size
         frac2 = match/ pid2.size
     else:
