@@ -9,10 +9,11 @@ from numpy.random import default_rng
 
 def potential_matches(hals1_pos, hals2_pos, box_size=1000):
     t_now = time()
-    kdt = KDTree_skl(hals2_pos)
+    kdt = KDTree_sp(hals2_pos, boxsize=box_size)
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'kdtree constructed')
-    idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=True, breadth_first=False)
+    # idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=False)
+    idx21 = kdt.query(hals1_pos, k=20, )[1]
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'query done for spatial neighbours')
     return idx21
