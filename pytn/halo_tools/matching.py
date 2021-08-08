@@ -7,7 +7,7 @@ from time import sleep, time
 from numpy.random import default_rng
 
 
-def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1000):
+def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1000, num_match=20):
     t_now = time()
     hals1 = np.append(hals1_pos, hals1_extra, axis=1)
     hals2 = np.append(hals2_pos, hals2_extra, axis=1)
@@ -15,7 +15,7 @@ def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'kdtree constructed')
     # idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=False)
-    dists, idx21 = kdt.query(hals1, k=40, )
+    dists, idx21 = kdt.query(hals1, k=num_match, )
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'query done for spatial neighbours')
     return dists, idx21
