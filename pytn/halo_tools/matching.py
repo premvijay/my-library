@@ -15,7 +15,7 @@ def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'kdtree constructed')
     # idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=False)
-    dists, idx21 = kdt.query(hals1, k=num_match, )
+    dists, idx21 = kdt.query(hals1, k=num_match, workers=-1)
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'query done for spatial neighbours')
     return dists, idx21
