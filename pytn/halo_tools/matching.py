@@ -7,16 +7,18 @@ from time import sleep, time
 from numpy.random import default_rng
 
 
-def potential_matches(hals1_pos, hals2_pos, box_size=1000):
+def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1000):
     t_now = time()
-    kdt = KDTree_sp(hals2_pos, boxsize=box_size)
+    hals1 = np.append(hals1_pos, hals1_extra, axis=1)
+    hals2 = np.append(hals2_pos, hals2_extra, axis=1)
+    kdt = KDTree_sp(hals2, boxsize=box_size)
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'kdtree constructed')
     # idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=False)
-    idx21 = kdt.query(hals1_pos, k=20, )[1]
+    dists, idx21 = kdt.query(hals1, k=40, )
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'query done for spatial neighbours')
-    return idx21
+    return dists, idx21
 
 # def isin(x,s):
 #     return x in s
