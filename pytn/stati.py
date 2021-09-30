@@ -134,18 +134,18 @@ class parameter_estimation(object):
 	def BIC(self,chisquareML,p,N):
 		return chisquareML + p*np.log(N)
 		
-	def AICpolynomial_fitter(self,x,y,sigma,xalt):
+	def AICpolynomial_fitter(self,x,y,sigma,xalt, degmin=1, degmax=1):
 		"""
 		AIC polynomial fitter for regular polynomials
 		"""
 		
 
-		degree = 0
+		degree = degmin
 		AIC = np.zeros([6])
 		BIC = np.zeros([6])
 		maxpercentagediff = np.zeros([6])
 		chisqpdof = np.zeros([6])
-		for inter in range(6):
+		for inter in range(degmax-degmin+1):
 			d,f = self.polynomialfit(x,y,degree,sigma)
 			y_model = np.zeros([len(x)])
 			for power in range(len(d)):
