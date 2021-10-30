@@ -86,12 +86,12 @@ def matching_frac(pid1, pid2, max_num = 1000, use_boolar_alg=True, assume_sorted
         if use_boolar_alg:
             match = isinlen_int(pid1, pid2)
             t_bef, t_now = t_now, time()
-            print(t_now-t_bef, 'without sample isin_int done')
+            # print(t_now-t_bef, 'without sample isin_int done')
         else:
             # match = in1dlen_searchsorted(pid1, pid2, assume_unique=True)
             match = np.count_nonzero(np.isin(pid1, pid2, assume_unique=True))
             t_bef, t_now = t_now, time()
-            print(t_now-t_bef, 'without sample isin done')
+            # print(t_now-t_bef, 'without sample isin done')
 
         frac1 = match/ pid1.size
         frac2 = match/ pid2.size
