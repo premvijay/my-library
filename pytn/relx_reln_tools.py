@@ -92,6 +92,9 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None):
     grpfil = simfile['/Groups/98/Group']
     grpfil_dmo = simfile_dmo['/Groups/98/Group']
 
+    cen = grpfil['GroupPos'][halo_id][:]
+    cen_dmo = grpfil_dmo['GroupPos'][halo_dmo_id][:]
+
     start = simfile['/Offsets/98/Group/SnapByType'][halo_id, 1]
     length = simfile['/Groups/98/Group/GroupLenType'][halo_id, 1]
     posd = unperiod(simfile['/Snapshots/98/PartType1/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
@@ -128,7 +131,7 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None):
 
     eps_sl = simfile['Parameters'].attrs['SofteningMaxPhysType1'] * (1+ simfile['Snapshots/98/Header'].attrs['Redshift'])
 
-    data = {'posd_dmo':posd_dmo, 'posd':posd, 'posb':posb, 'pos_star':pos_starbh, 'm_prtd_dmo':m_prtd_dmo*1e10, 'm_prtd':m_prtd*1e10, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prt_starbh*1e10, 'hsmlb':hsmlb, 'fd':f_dm, 'Rvir':Rvir, 'Rvir_dmo':Rvir_dmo, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'eps_sl':eps_sl }
+    data = {'cen':cen, 'cen_dmo':cen_dmo, 'posd_dmo':posd_dmo, 'posd':posd, 'posb':posb, 'pos_star':pos_starbh, 'm_prtd_dmo':m_prtd_dmo*1e10, 'm_prtd':m_prtd*1e10, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prt_starbh*1e10, 'hsmlb':hsmlb, 'fd':f_dm, 'Rvir':Rvir, 'Rvir_dmo':Rvir_dmo, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'eps_sl':eps_sl }
     # print('saving')
     simfile.close()
     simfile_dmo.close()
@@ -207,7 +210,7 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
     snap.close()
     snap_dmo.close()
 
-    data = {'posd_dmo':posd_dmo*1e3, 'posd':posd*1e3, 'posb':posb*1e3, 'pos_star':pos_star*1e3, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prts*1e10, 'hsmlb':hsmlb, 'Rvir':Rvir, 'Rvir_dmo':Rvir_dmo, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'fd':fd, 'm_prtd':m_prtd, 'm_prtd_dmo':m_prtd_dmo, 'eps_sl':eps_sl }
+    data = {'cen':cen*1e3, 'cen_dmo':cen_dmo*1e3, 'posd_dmo':posd_dmo*1e3, 'posd':posd*1e3, 'posb':posb*1e3, 'pos_star':pos_star*1e3, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prts*1e10, 'hsmlb':hsmlb, 'Rvir':Rvir*1e3, 'Rvir_dmo':Rvir_dmo*1e3, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'fd':fd, 'm_prtd':m_prtd, 'm_prtd_dmo':m_prtd_dmo, 'eps_sl':eps_sl }
     # print('saving')
     if savefilepth==None:
         return data
