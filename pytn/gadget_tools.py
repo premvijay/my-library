@@ -69,6 +69,24 @@ class Snapshot():
             # self.h5file = h5file
             h5file.close()
         
+        elif self.filetype == 'gadget_hdf5' and self.snapfrmt=='gadget2':
+            h5file = self.h5py.File(self.filename, 'r')
+            self.N_prtcl_thisfile = h5file['Header'].attrs['NumPart_ThisFile']    ## The number of particles of each type present in the file
+            self.mass_table       = h5file['Header'].attrs['MassTable']     ## Gives the mass of different particles
+            self.scale_factor     = h5file['Header'].attrs['Time']   ##Time of output,  or expansion factor for cosmological simulations
+            self.redshift         = np.asscalar(h5file['Header'].attrs['Redshift'])   ## Redshift of the snapshot
+            self.N_prtcl_total    = h5file['Header'].attrs['NumPart_Total']   ## Total number of each particle present in the simulation
+            self.num_files        = h5file['Header'].attrs['NumFilesPerSnapshot'] ## Number of files in each snapshot
+            self.box_size         = h5file['Header'].attrs['BoxSize']  ## Gives the box size if periodic boundary conditions are used
+            self.Omega_m_0        = h5file['Header'].attrs['Omega0']     ## Matter density at z = 0 in the units of critical density
+            self.Omega_Lam_0      = h5file['Header'].attrs['OmegaLambda'] ## Vacuum Energy Density at z=0 in the units of critical density
+            self.Hubble_param     = h5file['Header'].attrs['HubbleParam'] ## gives the hubble constant in units of 100 kms^-1Mpc^-1  
+            # # self.num_part_types   = h5file['Config'].attrs['NTYPES']
+            # self.params           = h5file['Parameters'].attrs
+
+            # self.h5file = h5file
+            h5file.close()
+        
         elif self.snapfrmt=='swift':
             h5file = self.h5py.File(self.filename, 'r')
             self.unitlen = h5file['InternalCodeUnits'].attrs['Unit length in cgs (U_L)']
