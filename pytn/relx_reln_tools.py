@@ -329,4 +329,4 @@ def get_rel_ratio(data, sph_gas=1, range_min_r=None):
     MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
     rfri = rf / ri
 
-    return (MiMf, rfri, rf/R, Mdr, Mbr, Mdr_dmo, ri_pre/R)
+    return (MiMf, rfri, rf/R, Mdr, Mbr, Msr, Mdr_dmo, ri_pre/R)
