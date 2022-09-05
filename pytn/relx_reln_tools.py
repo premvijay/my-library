@@ -207,10 +207,22 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
     pos_star = unperiod(snap.read_dataset(4, "Coordinates")[indx_star] - cen, lenscl=box_size/2, box_size=box_size)
     m_prts = snap.read_dataset(4, "Mass")[indx_star]
 
+    gns_bh = snap.read_dataset(5, 'GroupNumber')
+    indx_bh = np.where(gns_bh==halo_id)
+    try:
+        pos_bh = snap.read_dataset(5, "Coordinates")[indx_bh] - cen
+        m_prtbh = snap.read_dataset(5, "Mass")[indx_bh]
+    
+        pos_starbh = np.concatenate([pos_star,pos_bh])
+        m_prt_starbh = np.concatenate([m_prts,m_prtbh])
+    except:
+        pos_starbh = pos_star
+        m_prt_starbh = m_prts
+
     snap.close()
     snap_dmo.close()
 
-    data = {'cen':cen*1e3, 'cen_dmo':cen_dmo*1e3, 'posd_dmo':posd_dmo*1e3, 'posd':posd*1e3, 'posb':posb*1e3, 'pos_star':pos_star*1e3, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prts*1e10, 'hsmlb':hsmlb, 'Rvir':Rvir*1e3, 'Rvir_dmo':Rvir_dmo*1e3, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'fd':fd, 'm_prtd':m_prtd, 'm_prtd_dmo':m_prtd_dmo, 'eps_sl':eps_sl }
+    data = {'cen':cen*1e3, 'cen_dmo':cen_dmo*1e3, 'posd_dmo':posd_dmo*1e3, 'posd':posd*1e3, 'posb':posb*1e3, 'pos_star':pos_starbh*1e3, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prt_starbh*1e10, 'hsmlb':hsmlb, 'Rvir':Rvir*1e3, 'Rvir_dmo':Rvir_dmo*1e3, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'fd':fd, 'm_prtd':m_prtd, 'm_prtd_dmo':m_prtd_dmo, 'eps_sl':eps_sl }
     # print('saving')
     if savefilepth==None:
         return data
