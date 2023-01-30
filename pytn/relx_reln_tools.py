@@ -251,7 +251,7 @@ def get_rel_ratio_conveni_wrap(args):
     
 def get_rel_ratio(data, sph_gas=1, range_min_r=None):
     data_attrs = data
-    eps_sl, fd, m_prtd, m_prtd_dmo = data['eps_sl'], data['fd'], data['m_prtd'], data['m_prtd_dmo']
+    eps_sl, fd, m_prtd, m_prtd_dmo, rbins_num = data['eps_sl'], data['fd'], data['m_prtd'], data['m_prtd_dmo'], data['rbins_num']
     R = data['Rvir']
     R_dmo = data['Rvir_dmo']
     if range_min_r==None: range_min_r = 10 * eps_sl / R
@@ -261,8 +261,8 @@ def get_rel_ratio(data, sph_gas=1, range_min_r=None):
     # R = data_attrs['Rvir']
     range_min = range_min_r*R
 
-    Rad_bin_edge = np.logspace(np.log10(range_min),np.log10(range_max),30)
-    Rad_bin_edge_i = np.logspace(np.log10(range_min_dmo),np.log10(range_max_dmo),60)
+    Rad_bin_edge = np.logspace(np.log10(range_min),np.log10(range_max), rbins_num)
+    Rad_bin_edge_i = np.logspace(np.log10(range_min_dmo),np.log10(range_max_dmo), rbins_num*2)
 
     Rad_bin_edge = np.insert(Rad_bin_edge,0,0)
     Rad_bin_edge.sort()
