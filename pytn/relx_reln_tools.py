@@ -234,7 +234,7 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
 #%%
 def get_rel_ratio_conveni_wrap(args):
     arg_dict, mtch_pair = args
-    range_min_r, eps_sl, fd, m_prtd, m_prtd_dmo, sph_gas= arg_dict['common']
+    range_min_r, eps_sl, fd, m_prtd, m_prtd_dmo, sph_gas, rbins_num= arg_dict['common']
     # halo_id, halo_dmo_id = mtch_pair.ID, mtch_pair.ID_dmo
     # halname = f"{simname}_{halo_id:d}_{halo_dmo_id:d}"
     # data = np.load(os.environ['SCRATCHLOCAL']+f"/tmp/{halname}.npy", allow_pickle=True).tolist()
@@ -246,12 +246,12 @@ def get_rel_ratio_conveni_wrap(args):
     else:
         data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'])
 
-    return get_rel_ratio(data, sph_gas=sph_gas, range_min_r=range_min_r)
+    return get_rel_ratio(data, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r)
     
     
-def get_rel_ratio(data, sph_gas=1, range_min_r=None):
+def get_rel_ratio(data, sph_gas=1, rbins_num=30, range_min_r=None):
     data_attrs = data
-    eps_sl, fd, m_prtd, m_prtd_dmo, rbins_num = data['eps_sl'], data['fd'], data['m_prtd'], data['m_prtd_dmo'], data['rbins_num']
+    eps_sl, fd, m_prtd, m_prtd_dmo = data['eps_sl'], data['fd'], data['m_prtd'], data['m_prtd_dmo']
     R = data['Rvir']
     R_dmo = data['Rvir_dmo']
     if range_min_r==None: range_min_r = 10 * eps_sl / R
