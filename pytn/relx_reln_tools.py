@@ -231,6 +231,14 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
         # saveh5_dict(savefilepth + f"/preread/{simname}_{halo_id:d}_{halo_dmo_id:d}.hdf5", data, comp=None)#'gzip')
         # np.save(savefilepth, data)
 
+
+#%%
+def read_prtcl_hal_pairs_camels(mtch_pair, simname):
+    halo_id, halo_dmo_id = int(mtch_pair.ID), int(mtch_pair.ID_dmo)
+    halname = f"{simname}_{halo_id:d}_{halo_dmo_id:d}"
+    return h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/CAMELS_I/{halname}.hdf5", 'r')
+    
+
 #%%
 def get_rel_ratio_conveni_wrap(args):
     arg_dict, mtch_pair = args
@@ -241,19 +249,23 @@ def get_rel_ratio_conveni_wrap(args):
     # data = h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/{halname}.hdf5", 'r')
     # data_attrs = data.attrs
     # print(mtch_pair)
+    data_attrs = None
     if arg_dict['simsuite']=='Eagle':
         data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'])
-    else:
+    elif arg_dict['simsuite']=='TNG':
         data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'])
+    elif arg_dict['simsuite']=='Camels':
+        data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'])
+        data_attrs = data.attrs
 
-    return get_rel_ratio(data, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r)
+    return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r)
     
     
-def get_rel_ratio(data, sph_gas=1, rbins_num=30, range_min_r=None):
-    data_attrs = data
-    eps_sl, fd, m_prtd, m_prtd_dmo = data['eps_sl'], data['fd'], data['m_prtd'], data['m_prtd_dmo']
-    R = data['Rvir']
-    R_dmo = data['Rvir_dmo']
+def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None):
+    if data_attrs==None: data_attrs = data
+    eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
+    R = data_attrs['Rvir']
+    R_dmo = data_attrs['Rvir_dmo']
     if range_min_r==None: range_min_r = 10 * eps_sl / R
     range_min_dmo = 9 * eps_sl
     range_max = R
@@ -275,6 +287,7 @@ def get_rel_ratio(data, sph_gas=1, rbins_num=30, range_min_r=None):
 
     posd_r = np.linalg.norm(data['posd'], axis=1)
     num_profile = np.histogram(posd_r, Rad_bin_edge)[0]
+    # print(Rad_bin_edge, num_profile)
 
     
 
@@ -340,5 +353,9 @@ def get_rel_ratio(data, sph_gas=1, rbins_num=30, range_min_r=None):
 
     MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
     rfri = rf / ri
+
+    if num_profile_dmo.min()<20 or num_profile_dmo.min()<20:
+        # MiMf = np.nan
+        rfri[0] = np.nan
 
     return (MiMf, rfri, rf/R, Mdr, Mbr, Msr, Mdr_dmo, ri_pre/R)
