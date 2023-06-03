@@ -293,7 +293,7 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,wa
     
 
     # assert num_profile.min()>50, f" Noise: Only {num_profile.min():d} particles in a bin, increase bin width. Id: {data_attrs['ID']:d}, {num_profile.argmin():d}"
-    if num_profile.min()<40 and warn_noise: 
+    if num_profile.min()<20 and warn_noise: 
         noisy=1
         print(f"Warning: Only {num_profile.min():d} particles in a bin, increase bin width. Id: {data_attrs['ID']:d}, {num_profile.argmin():d}")
 
