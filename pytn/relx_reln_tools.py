@@ -258,10 +258,11 @@ def get_rel_ratio_conveni_wrap(args):
         data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'])
         data_attrs = data.attrs
 
-    return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r)
+    return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
     
     
-def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None):
+def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,warn_noise=0, noise_setnan=0):
+    noisy=0
     if data_attrs==None: data_attrs = data
     eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
     R = data_attrs['Rvir']
@@ -292,7 +293,9 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None):
     
 
     # assert num_profile.min()>50, f" Noise: Only {num_profile.min():d} particles in a bin, increase bin width. Id: {data_attrs['ID']:d}, {num_profile.argmin():d}"
-    if num_profile.min()<100: print(f"Warning: Only {num_profile.min():d} particles in a bin, increase bin width. Id: {data_attrs['ID']:d}, {num_profile.argmin():d}")
+    if num_profile.min()<40 and warn_noise: 
+        noisy=1
+        print(f"Warning: Only {num_profile.min():d} particles in a bin, increase bin width. Id: {data_attrs['ID']:d}, {num_profile.argmin():d}")
 
     mass_profile = num_profile * m_prtd
 
@@ -326,7 +329,9 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None):
     # print(num_profile_dmo)
 
     # assert num_profile_dmo.min()>20, f"Noise: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d} \n {num_profile_dmo} {Rad_bin_edge_i}"
-    if num_profile_dmo.min()<50: print(f"Warning: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d}")
+    if num_profile_dmo.min()<20 and warn_noise:
+        noisy=1
+        print(f"Warning: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d}")
 
     mass_profile_dmo = num_profile_dmo * m_prtd_dmo
 
@@ -354,8 +359,6 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None):
     MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
     rfri = rf / ri
 
-    if num_profile_dmo.min()<20 or num_profile_dmo.min()<20:
-        # MiMf = np.nan
-        rfri[0] = np.nan
+    if noise_setnan and noisy: rfri[:] = np.nan
 
     return (MiMf, rfri, rf/R, Mdr, Mbr, Msr, Mdr_dmo, ri_pre/R)
