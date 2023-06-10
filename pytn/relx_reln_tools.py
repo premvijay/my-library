@@ -233,10 +233,10 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
 
 
 #%%
-def read_prtcl_hal_pairs_camels(mtch_pair, simname):
+def read_prtcl_hal_pairs_camels(mtch_pair, simname, simset0='I'):
     halo_id, halo_dmo_id = int(mtch_pair.ID), int(mtch_pair.ID_dmo)
     halname = f"{simname}_{halo_id:d}_{halo_dmo_id:d}"
-    return h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/CAMELS_I/{halname}.hdf5", 'r')
+    return h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/CAMELS_{simset0}/{halname}.hdf5", 'r')
     
 
 #%%
@@ -255,7 +255,7 @@ def get_rel_ratio_conveni_wrap(args):
     elif arg_dict['simsuite']=='TNG':
         data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'])
     elif arg_dict['simsuite']=='Camels':
-        data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'])
+        data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0])
         data_attrs = data.attrs
 
     return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
