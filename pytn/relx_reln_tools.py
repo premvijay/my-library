@@ -261,7 +261,7 @@ def get_rel_ratio_conveni_wrap(args):
     return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
     
     
-def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,warn_noise=0, noise_setnan=0):
+def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1):
     noisy=0
     if data_attrs==None: data_attrs = data
     eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
@@ -269,7 +269,7 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,wa
     R_dmo = data_attrs['Rvir_dmo']
     if range_min_r==None: range_min_r = 10 * eps_sl / R
     range_min_dmo = 9 * eps_sl
-    range_max = R
+    range_max = R #*.4
     range_max_dmo = R_dmo
     # R = data_attrs['Rvir']
     range_min = range_min_r*R
@@ -323,17 +323,19 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,wa
 
 
     posd_dmo_r = np.linalg.norm(data['posd_dmo'], axis=1)
-    num_profile_dmo = np.histogram(posd_dmo_r, Rad_bin_edge_i)[0]
 
-    # print(range_min_dmo, range_max_dmo, posd_dmo_r.max(), posd_dmo_r.min())
-    # print(num_profile_dmo)
+    if not relx_prtcl:
+        num_profile_dmo = np.histogram(posd_dmo_r, Rad_bin_edge_i)[0]
 
-    # assert num_profile_dmo.min()>20, f"Noise: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d} \n {num_profile_dmo} {Rad_bin_edge_i}"
-    if num_profile_dmo.min()<20 and warn_noise:
-        noisy=1
-        print(f"Warning: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d}")
+        # print(range_min_dmo, range_max_dmo, posd_dmo_r.max(), posd_dmo_r.min())
+        # print(num_profile_dmo)
 
-    mass_profile_dmo = num_profile_dmo * m_prtd_dmo
+        # assert num_profile_dmo.min()>20, f"Noise: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d} \n {num_profile_dmo} {Rad_bin_edge_i}"
+        if num_profile_dmo.min()<20 and warn_noise:
+            noisy=1
+            print(f"Warning: Only {num_profile_dmo.min():d} particles in a bin, increase DMO bin width. Id_dmo: {data_attrs['ID_dmo']:d}, {num_profile_dmo.argmin():d}")
+
+        mass_profile_dmo = num_profile_dmo * m_prtd_dmo
 
     try:
         data.close() 
@@ -341,20 +343,42 @@ def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None,wa
         pass
 
 
-    r, Mdr, Mbr, Msr, Mdr_dmo = Rad_bin_edge[1:], np.cumsum(mass_profile), np.cumsum(mass_profile_bar), np.cumsum(mass_profile_star), np.cumsum(mass_profile_dmo)*fd
+    r, Mdr, Mbr, Msr = Rad_bin_edge[1:], np.cumsum(mass_profile), np.cumsum(mass_profile_bar), np.cumsum(mass_profile_star)
     ri_pre = Rad_bin_edge_i[1:]
     # r, Mdr, Mbr, Mdr_dmo
 
     rf = r.copy()
 
-    logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+    if relx_prtcl:
+        posd_r = np.sort(posd_r)
+        # posb_r_sort_ind = np.argsort(posb_r)
+        # posb_r = posb_r[posb_r_sort_ind]
+        # posb_r = posb_r[:][posb_r_sort_ind]
+        # hsmlb = hsmlb[:][posb_r_sort_ind]
+        # massb = massb[:][posb_r_sort_ind]
+    
+        posd_dmo_r = np.sort(posd_dmo_r)
 
-    # assert (ri_M(Mdr_dmo) == r).all()
+        Ndr = np.searchsorted(posd_r, rf)
+        try:
+            ri = posd_dmo_r[Ndr-1]
+        except:
+            ri = 0*Ndr
+        # Nbr = np.searchsorted(posb_r, rf)
 
-    ri = 10**logri_logM(np.log10(Mdr))
+        # MiMf = ( fd* (Nbr/Ndr *0.049/0.3 + 1) )**-1
+        Mdr_dmo = ri_pre*np.nan
 
-    Mf = Mdr+Mbr
-    Mi = Mdr/fd
+    else:
+        Mdr_dmo = np.cumsum(mass_profile_dmo)*fd
+        logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+
+        # assert (ri_M(Mdr_dmo) == r).all()
+
+        ri = 10**logri_logM(np.log10(Mdr))
+
+    # Mf = Mdr+Mbr
+    # Mi = Mdr/fd
 
     MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
     rfri = rf / ri
