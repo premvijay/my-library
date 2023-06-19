@@ -261,7 +261,7 @@ def get_rel_ratio_conveni_wrap(args):
     return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
     
     
-def get_rel_ratio(data, data_attrs, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1):
+def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1):
     noisy=0
     if data_attrs==None: data_attrs = data
     eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
