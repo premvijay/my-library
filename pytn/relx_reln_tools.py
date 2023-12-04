@@ -83,7 +83,7 @@ def gaussian_integ_sphere_indef(Rad, prtcl_pos_r, h=1, m=1):
     return ans
 
 # %%
-def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None):
+def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98):
     halo_id, halo_dmo_id = int(mtch_pair.ID), int(mtch_pair.ID_dmo)
     simfile = h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}/simulation.hdf5', mode='r')
     simfile_dmo = h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}-Dark/simulation.hdf5', mode='r')
@@ -144,7 +144,7 @@ from itertools import chain, combinations
 def all_subsets(ss):
     return chain(*map(lambda x: combinations(ss, x), range(1, len(ss)+1)))
 
-def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefilepth=None):
+def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefilepth=None, snapnum=28):
     snap = EagleSnapshot(simfilename)
     snap_dmo = EagleSnapshot(simfilename_dmo)
     snaph5 = h5py.File(simfilename,'r'); snaph5_dmo = h5py.File(simfilename_dmo,'r')
@@ -233,10 +233,10 @@ def read_prtcl_hal_pairs_eagle(mtch_pair, simfilename, simfilename_dmo, savefile
 
 
 #%%
-def read_prtcl_hal_pairs_camels(mtch_pair, simname, simset0='I'):
+def read_prtcl_hal_pairs_camels(mtch_pair, simname, simset0='I', snapnum=33):
     halo_id, halo_dmo_id = int(mtch_pair.ID), int(mtch_pair.ID_dmo)
-    halname = f"{simname}_{halo_id:d}_{halo_dmo_id:d}"
-    return h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/CAMELS_{simset0}/{halname}.hdf5", 'r')
+    halname = f"{simname}_snap0{snapnum}_{halo_id:d}_{halo_dmo_id:d}"
+    return h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/CAMELS_{simset0}/1P/{halname}.hdf5", 'r')
     
 
 #%%
@@ -251,11 +251,11 @@ def get_rel_ratio_conveni_wrap(args):
     # print(mtch_pair)
     data_attrs = None
     if arg_dict['simsuite']=='Eagle':
-        data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'])
+        data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'], snapnum=arg_dict['snapnum'])
     elif arg_dict['simsuite']=='TNG':
-        data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'])
+        data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'], snapnum=arg_dict['snapnum'])
     elif arg_dict['simsuite']=='Camels':
-        data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0])
+        data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0], snapnum=arg_dict['snapnum'])
         data_attrs = data.attrs
 
     return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
