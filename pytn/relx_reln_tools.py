@@ -89,47 +89,47 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98):
     simfile_dmo = h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}-Dark/simulation.hdf5', mode='r')
     # print('reading', halo_id)
     box_size = simfile['Header'].attrs['BoxSize']
-    grpfil = simfile['/Groups/98/Group']
-    grpfil_dmo = simfile_dmo['/Groups/98/Group']
+    grpfil = simfile[f'/Groups/{snapnum}/Group']
+    grpfil_dmo = simfile_dmo[f'/Groups/{snapnum}/Group']
 
     cen = grpfil['GroupPos'][halo_id][:]
     cen_dmo = grpfil_dmo['GroupPos'][halo_dmo_id][:]
 
-    start = simfile['/Offsets/98/Group/SnapByType'][halo_id, 1]
-    length = simfile['/Groups/98/Group/GroupLenType'][halo_id, 1]
-    posd = unperiod(simfile['/Snapshots/98/PartType1/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 1]
+    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 1]
+    posd = unperiod(simfile[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
 
-    start = simfile['/Offsets/98/Group/SnapByType'][halo_id, 0]
-    length = simfile['/Groups/98/Group/GroupLenType'][halo_id, 0]
-    posb = unperiod(simfile['/Snapshots/98/PartType0/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prtb = simfile['/Snapshots/98/PartType0/Masses'][start:start+length]
-    densb = simfile['/Snapshots/98/PartType0/Density'][start:start+length]
+    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 0]
+    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 0]
+    posb = unperiod(simfile[f'/Snapshots/{snapnum}/PartType0/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+    m_prtb = simfile[f'/Snapshots/{snapnum}/PartType0/Masses'][start:start+length]
+    densb = simfile[f'/Snapshots/{snapnum}/PartType0/Density'][start:start+length]
     hsmlb = (m_prtb/densb)**(1/3)
 
-    start = simfile['/Offsets/98/Group/SnapByType'][halo_id, 4]
-    length = simfile['/Groups/98/Group/GroupLenType'][halo_id, 4]
-    pos_star = unperiod(simfile['/Snapshots/98/PartType4/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prts = simfile['/Snapshots/98/PartType4/Masses'][start:start+length]
+    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 4]
+    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 4]
+    pos_star = unperiod(simfile[f'/Snapshots/{snapnum}/PartType4/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+    m_prts = simfile[f'/Snapshots/{snapnum}/PartType4/Masses'][start:start+length]
 
-    start = simfile['/Offsets/98/Group/SnapByType'][halo_id, 5]
-    length = simfile['/Groups/98/Group/GroupLenType'][halo_id, 5]
-    pos_bh = unperiod(simfile['/Snapshots/98/PartType5/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prtbh = simfile['/Snapshots/98/PartType5/Masses'][start:start+length]
+    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 5]
+    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 5]
+    pos_bh = unperiod(simfile[f'/Snapshots/{snapnum}/PartType5/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+    m_prtbh = simfile[f'/Snapshots/{snapnum}/PartType5/Masses'][start:start+length]
 
     pos_starbh = np.concatenate([pos_star,pos_bh])
     m_prt_starbh = np.concatenate([m_prts,m_prtbh])
 
-    start_dmo = simfile_dmo['/Offsets/98/Group/SnapByType'][halo_dmo_id, 1]
-    length_dmo = simfile_dmo['/Groups/98/Group/GroupLenType'][halo_dmo_id, 1]
-    posd_dmo = unperiod(simfile_dmo['/Snapshots/98/PartType1/Coordinates'][start_dmo:start_dmo+length_dmo] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
+    start_dmo = simfile_dmo[f'/Offsets/{snapnum}/Group/SnapByType'][halo_dmo_id, 1]
+    length_dmo = simfile_dmo[f'/Groups/{snapnum}/Group/GroupLenType'][halo_dmo_id, 1]
+    posd_dmo = unperiod(simfile_dmo[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start_dmo:start_dmo+length_dmo] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
 
     m_prtd = simfile['Header'].attrs['MassTable'][1]
     m_prtd_dmo = simfile_dmo['Header'].attrs['MassTable'][1]
-    Rvir = simfile['/Groups/98/Group/Group_R_Crit200'][halo_id]
-    Rvir_dmo = simfile_dmo['/Groups/98/Group/Group_R_Crit200'][halo_dmo_id]
+    Rvir = simfile[f'/Groups/{snapnum}/Group/Group_R_Crit200'][halo_id]
+    Rvir_dmo = simfile_dmo[f'/Groups/{snapnum}/Group/Group_R_Crit200'][halo_dmo_id]
     f_dm = 1 - simfile['Header'].attrs['OmegaBaryon']/simfile['Header'].attrs['Omega0']
 
-    eps_sl = simfile['Parameters'].attrs['SofteningMaxPhysType1'] * (1+ simfile['Snapshots/98/Header'].attrs['Redshift'])
+    eps_sl = simfile['Parameters'].attrs['SofteningMaxPhysType1'] * (1+ simfile[f'Snapshots/{snapnum}/Header'].attrs['Redshift'])
 
     data = {'cen':cen, 'cen_dmo':cen_dmo, 'posd_dmo':posd_dmo, 'posd':posd, 'posb':posb, 'pos_star':pos_starbh, 'm_prtd_dmo':m_prtd_dmo*1e10, 'm_prtd':m_prtd*1e10, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prt_starbh*1e10, 'hsmlb':hsmlb, 'fd':f_dm, 'Rvir':Rvir, 'Rvir_dmo':Rvir_dmo, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'eps_sl':eps_sl }
     # print('saving')
@@ -252,7 +252,7 @@ def get_rel_ratio_conveni_wrap(args):
     data_attrs = None
     if arg_dict['simsuite']=='Eagle':
         data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'], snapnum=arg_dict['snapnum'])
-    elif arg_dict['simsuite']=='TNG':
+    elif arg_dict['simsuite']=='Tng':
         data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'], snapnum=arg_dict['snapnum'])
     elif arg_dict['simsuite']=='Camels':
         data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0], snapnum=arg_dict['snapnum'])
