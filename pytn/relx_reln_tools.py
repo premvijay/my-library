@@ -83,7 +83,7 @@ def gaussian_integ_sphere_indef(Rad, prtcl_pos_r, h=1, m=1):
     return ans
 
 # %%
-def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98):
+def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98, useCutout=False):
     halo_id, halo_dmo_id = int(mtch_pair.ID), int(mtch_pair.ID_dmo)
     simfile = h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}/simulation.hdf5', mode='r')
     simfile_dmo = h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}-Dark/simulation.hdf5', mode='r')
@@ -95,33 +95,60 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98):
     cen = grpfil['GroupPos'][halo_id][:]
     cen_dmo = grpfil_dmo['GroupPos'][halo_dmo_id][:]
 
-    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 1]
-    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 1]
-    posd = unperiod(simfile[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+    if useCutout:
+        cutoutfile = h5py.File(os.environ['SCRATCH'] + f'/local/halo_data/cutout/ITNG/{simname}_{halo_id}_snap{snapnum}.hdf5', mode='r')
+        cutoutfile_dmo = h5py.File(os.environ['SCRATCH'] + f'/local/halo_data/cutout/ITNG/{simname}-Dark_{halo_dmo_id}_snap{snapnum}.hdf5', mode='r')
+            
+        posd = unperiod(cutoutfile[f'/PartType1/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
 
-    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 0]
-    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 0]
-    posb = unperiod(simfile[f'/Snapshots/{snapnum}/PartType0/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prtb = simfile[f'/Snapshots/{snapnum}/PartType0/Masses'][start:start+length]
-    densb = simfile[f'/Snapshots/{snapnum}/PartType0/Density'][start:start+length]
-    hsmlb = (m_prtb/densb)**(1/3)
+        posb = unperiod(cutoutfile[f'/PartType0/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prtb = cutoutfile[f'/PartType0/Masses'][:]
+        densb = cutoutfile[f'/PartType0/Density'][:]
+        hsmlb = (m_prtb/densb)**(1/3)
 
-    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 4]
-    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 4]
-    pos_star = unperiod(simfile[f'/Snapshots/{snapnum}/PartType4/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prts = simfile[f'/Snapshots/{snapnum}/PartType4/Masses'][start:start+length]
+        pos_star = unperiod(cutoutfile[f'/PartType4/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prts = cutoutfile[f'/PartType4/Masses'][:]
 
-    start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 5]
-    length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 5]
-    pos_bh = unperiod(simfile[f'/Snapshots/{snapnum}/PartType5/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-    m_prtbh = simfile[f'/Snapshots/{snapnum}/PartType5/Masses'][start:start+length]
+        pos_bh = unperiod(cutoutfile[f'/PartType5/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prtbh = cutoutfile[f'/PartType5/Masses'][:]
 
+        posd_dmo = unperiod(cutoutfile_dmo[f'/PartType1/Coordinates'][:] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
+        
+        z = cutoutfile[f'Header'].attrs['Redshift']
+
+        cutoutfile.close()
+        cutoutfile_dmo.close()
+
+    else:
+        start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 1]
+        length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 1]
+        posd = unperiod(simfile[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+
+        start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 0]
+        length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 0]
+        posb = unperiod(simfile[f'/Snapshots/{snapnum}/PartType0/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prtb = simfile[f'/Snapshots/{snapnum}/PartType0/Masses'][start:start+length]
+        densb = simfile[f'/Snapshots/{snapnum}/PartType0/Density'][start:start+length]
+        hsmlb = (m_prtb/densb)**(1/3)
+
+        start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 4]
+        length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 4]
+        pos_star = unperiod(simfile[f'/Snapshots/{snapnum}/PartType4/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prts = simfile[f'/Snapshots/{snapnum}/PartType4/Masses'][start:start+length]
+
+        start = simfile[f'/Offsets/{snapnum}/Group/SnapByType'][halo_id, 5]
+        length = simfile[f'/Groups/{snapnum}/Group/GroupLenType'][halo_id, 5]
+        pos_bh = unperiod(simfile[f'/Snapshots/{snapnum}/PartType5/Coordinates'][start:start+length] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+        m_prtbh = simfile[f'/Snapshots/{snapnum}/PartType5/Masses'][start:start+length]
+
+        start_dmo = simfile_dmo[f'/Offsets/{snapnum}/Group/SnapByType'][halo_dmo_id, 1]
+        length_dmo = simfile_dmo[f'/Groups/{snapnum}/Group/GroupLenType'][halo_dmo_id, 1]
+        posd_dmo = unperiod(simfile_dmo[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start_dmo:start_dmo+length_dmo] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
+
+        z = simfile[f'Snapshots/{snapnum}/Header'].attrs['Redshift']
+    
     pos_starbh = np.concatenate([pos_star,pos_bh])
     m_prt_starbh = np.concatenate([m_prts,m_prtbh])
-
-    start_dmo = simfile_dmo[f'/Offsets/{snapnum}/Group/SnapByType'][halo_dmo_id, 1]
-    length_dmo = simfile_dmo[f'/Groups/{snapnum}/Group/GroupLenType'][halo_dmo_id, 1]
-    posd_dmo = unperiod(simfile_dmo[f'/Snapshots/{snapnum}/PartType1/Coordinates'][start_dmo:start_dmo+length_dmo] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
 
     m_prtd = simfile['Header'].attrs['MassTable'][1]
     m_prtd_dmo = simfile_dmo['Header'].attrs['MassTable'][1]
@@ -129,7 +156,7 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98):
     Rvir_dmo = simfile_dmo[f'/Groups/{snapnum}/Group/Group_R_Crit200'][halo_dmo_id]
     f_dm = 1 - simfile['Header'].attrs['OmegaBaryon']/simfile['Header'].attrs['Omega0']
 
-    eps_sl = simfile['Parameters'].attrs['SofteningMaxPhysType1'] * (1+ simfile[f'Snapshots/{snapnum}/Header'].attrs['Redshift'])
+    eps_sl = simfile['Parameters'].attrs['SofteningMaxPhysType1'] * (1+z)
 
     data = {'cen':cen, 'cen_dmo':cen_dmo, 'posd_dmo':posd_dmo, 'posd':posd, 'posb':posb, 'pos_star':pos_starbh, 'm_prtd_dmo':m_prtd_dmo*1e10, 'm_prtd':m_prtd*1e10, 'm_prtb':m_prtb*1e10, 'm_prt_star':m_prt_starbh*1e10, 'hsmlb':hsmlb, 'fd':f_dm, 'Rvir':Rvir, 'Rvir_dmo':Rvir_dmo, 'ID':halo_id, 'ID_dmo':halo_dmo_id, 'eps_sl':eps_sl }
     # print('saving')
