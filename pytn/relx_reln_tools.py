@@ -96,8 +96,8 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98, u
     cen_dmo = grpfil_dmo['GroupPos'][halo_dmo_id][:]
 
     if useCutout:
-        cutoutfile = h5py.File(os.environ['SCRATCH'] + f'/local/halo_data/cutout/ITNG/{simname}_{halo_id}_snap{snapnum}.hdf5', mode='r')
-        cutoutfile_dmo = h5py.File(os.environ['SCRATCH'] + f'/local/halo_data/cutout/ITNG/{simname}-Dark_{halo_dmo_id}_snap{snapnum}.hdf5', mode='r')
+        cutoutfile = h5py.File(os.environ['SCRATCH']+f"/download/IllTNG/{simname}/postprocessing/cutouts/snap{snapnum}/hal{halo_id}.hdf5", mode='r')
+        cutoutfile_dmo = h5py.File(os.environ['SCRATCH']+f"/download/IllTNG/{simname}-Dark/postprocessing/cutouts/snap{snapnum}/hal{halo_dmo_id}.hdf5", mode='r')
             
         posd = unperiod(cutoutfile[f'/PartType1/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
 
@@ -109,8 +109,11 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98, u
         pos_star = unperiod(cutoutfile[f'/PartType4/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
         m_prts = cutoutfile[f'/PartType4/Masses'][:]
 
-        pos_bh = unperiod(cutoutfile[f'/PartType5/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
-        m_prtbh = cutoutfile[f'/PartType5/Masses'][:]
+        if cutoutfile['Header'].attrs['NumPart_ThisFile'][5] > 0:
+            pos_bh = unperiod(cutoutfile[f'/PartType5/Coordinates'][:] - grpfil['GroupPos'][halo_id], lenscl=box_size/2, box_size=box_size)
+            m_prtbh = cutoutfile[f'/PartType5/Masses'][:]
+        else:
+            m_prtbh = None
 
         posd_dmo = unperiod(cutoutfile_dmo[f'/PartType1/Coordinates'][:] - grpfil_dmo['GroupPos'][halo_dmo_id], lenscl=box_size/2, box_size=box_size)
         
@@ -147,8 +150,12 @@ def read_prtcl_hal_pairs_tng(mtch_pair, simname, savefilepth=None, snapnum=98, u
 
         z = simfile[f'Snapshots/{snapnum}/Header'].attrs['Redshift']
     
-    pos_starbh = np.concatenate([pos_star,pos_bh])
-    m_prt_starbh = np.concatenate([m_prts,m_prtbh])
+    if m_prtbh is None:
+        pos_starbh = pos_star
+        m_prt_starbh = m_prts
+    else:
+        pos_starbh = np.concatenate([pos_star,pos_bh])
+        m_prt_starbh = np.concatenate([m_prts,m_prtbh])
 
     m_prtd = simfile['Header'].attrs['MassTable'][1]
     m_prtd_dmo = simfile_dmo['Header'].attrs['MassTable'][1]
@@ -288,7 +295,7 @@ def get_rel_ratio_conveni_wrap(args):
     return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
     
     
-def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1):
+def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1, range_max_by_Rvir=1):
     noisy=0
     if data_attrs==None: data_attrs = data
     eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
@@ -296,7 +303,7 @@ def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=No
     R_dmo = data_attrs['Rvir_dmo']
     if range_min_r==None: range_min_r = 10 * eps_sl / R
     range_min_dmo = 9 * eps_sl
-    range_max = R #*.4
+    range_max = R*range_max_by_Rvir #*.4
     range_max_dmo = R_dmo
     # R = data_attrs['Rvir']
     range_min = range_min_r*R
