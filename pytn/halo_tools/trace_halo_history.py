@@ -5,6 +5,8 @@ import os
 # import copy
 # import pdb
 import h5py
+import requests
+from PIL import Image
 
 
 
@@ -81,6 +83,45 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         # halo_id_traced = simfile[f'/Groups/{snapnum_trace:d}/Subhalo/SubhaloGrNr'][:int(subhalo_id_traced.max()+1)][subhalo_id_traced[filter_matchhals_ind]]
     # simfile.close()
     return res_list
+
+# Function to fetch image from URL
+def fetch_image(snapnum,hal_id,matter_type,simname='TNG100-1',save=None):
+    savefilepath = save+f"_{matter_type}_snap{snapnum}.png"
+    if os.path.exists(savefilepath):
+        if os.path.getsize(savefilepath)>10000:
+            return
+    url = f"http://www.tng-project.org/api/{simname}/snapshots/{snapnum}/halos/{hal_id}/vis.png?partType={matter_type}"
+    r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
+    if save==None:
+        return Image.open(BytesIO(r.content))
+    else:
+        with open(savefilepath, "wb") as f:
+            f.write(r.content)
+
+def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
+    if save==True:
+        save = os.environ['SCRATCH']+f"/download/IllTNG/{simname}/postprocessing/cutouts/"
+    savedirpath = save+f"/snap{snapnum}/"
+    os.makedirs(savedirpath,exist_ok=True)
+    savefilepath = savedirpath+f"/hal{hal_id}.hdf5"
+    if os.path.exists(savefilepath):
+        if os.path.getsize(savefilepath)>10000:
+            return
+    url = f"http://www.tng-project.org/api/{simname}/snapshots/{snapnum}/halos/{hal_id}/cutout.hdf5"
+    # r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
+    consize = 0
+    while consize<10000:
+        try:
+            r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
+            consize = len(r.content)
+        except:
+            print('error occured',snapnum,hal_id)
+    if save==None:
+        return r
+    else:
+        print(len(r.content))
+        with open(savefilepath, "wb") as f:
+            f.write(r.content)
 
 
 if __name__=='__main__':
