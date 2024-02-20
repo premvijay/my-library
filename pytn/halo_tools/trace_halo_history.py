@@ -102,6 +102,7 @@ def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
     if save==True:
         save = os.environ['SCRATCH']+f"/download/IllTNG/{simname}/postprocessing/cutouts/"
     savedirpath = save+f"/snap{snapnum}/"
+    print(snapnum,hal_id,simname)
     os.makedirs(savedirpath,exist_ok=True)
     savefilepath = savedirpath+f"/hal{hal_id}.hdf5"
     if os.path.exists(savefilepath):
