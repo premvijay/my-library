@@ -92,7 +92,7 @@ def fetch_image(snapnum,hal_id,matter_type,simname='TNG100-1',save=None):
         if os.path.getsize(savefilepath)>10000:
             return
     url = f"http://www.tng-project.org/api/{simname}/snapshots/{snapnum}/halos/{hal_id}/vis.png?partType={matter_type}"
-    r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
+    r = requests.get(url, headers={"api-key": "ed0936bfe455b1212682e564fe2324c0"})
     if save==None:
         return Image.open(BytesIO(r.content))
     else:
@@ -116,7 +116,7 @@ def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
     while consize<10000 and numtry<=3:
         numtry+=1
         try:
-            r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
+            r = requests.get(url, headers={"api-key": "ed0936bfe455b1212682e564fe2324c0"})
             consize = len(r.content)
         except:
             continue # print('error occured doing again',snapnum,hal_id)
