@@ -111,18 +111,23 @@ def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
     url = f"http://www.tng-project.org/api/{simname}/snapshots/{snapnum}/halos/{hal_id}/cutout.hdf5"
     # r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
     consize = 0
-    while consize<10000:
+    numtry=0
+    while consize<10000 and numtry<=3:
+        numtry+=1
         try:
             r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
             consize = len(r.content)
         except:
-            print('error occured',snapnum,hal_id)
-    if save==None:
-        return r
+            continue # print('error occured doing again',snapnum,hal_id)
+    if numtry==4:
+        print('error occured',snapnum,hal_id,simname, len(r.content))
     else:
-        print(len(r.content))
-        with open(savefilepath, "wb") as f:
-            f.write(r.content)
+        if save==None:
+            return r
+        else:
+            print(len(r.content))
+            with open(savefilepath, "wb") as f:
+                f.write(r.content)
 
 
 if __name__=='__main__':
