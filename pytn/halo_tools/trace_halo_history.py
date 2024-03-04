@@ -55,7 +55,11 @@ def mmp_branch(halosfile, treesdir, upto=1):
 
 
 
-def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, all_across=False, return_R200c=True):
+def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True):
+    halo_id = np.asarray(halo_id)
+    if len(halo_id.shape)==0:
+        halo_id=halo_id[None]
+    
     crawl_len = snapnum_start-snapnum_trace
     with h5py.File(os.environ['SCRATCH'] + f'/download/IllTNG/{simname}/simulation.hdf5', mode='r') as simfile:
         subhalo_id = simfile[f'/Groups/{snapnum_start:d}/Group/GroupFirstSub'][:int(np.max(halo_id)+1)][halo_id]
@@ -68,9 +72,10 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         filter_matchhals_ind = np.where((sublink_ind!=-1) & (subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace))
 
         # subhalo_id_traced = subln_preload_sbhlID[sublink_ind+crawl_len]
-        if all_across:
+        if snapnum_return=='all_across':
             halo_id_traced = subln_preload_hosthlID[np.linspace(sublink_ind,sublink_ind+crawl_len, crawl_len+1, dtype='int')].T
         else:
+            crawl_len = snapnum_start-snapnum_return
             halo_id_traced = subln_preload_hosthlID[sublink_ind+crawl_len]
         
         res_list = [halo_id_traced[filter_matchhals_ind], filter_matchhals_ind]
