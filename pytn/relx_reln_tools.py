@@ -287,7 +287,10 @@ def get_rel_ratio_conveni_wrap(args):
     if arg_dict['simsuite']=='Eagle':
         data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'], snapnum=arg_dict['snapnum'])
     elif arg_dict['simsuite']=='Tng':
-        data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'], snapnum=arg_dict['snapnum'])
+        try:
+            data = read_prtcl_hal_pairs_tng(mtch_pair, simname=arg_dict['simname'], snapnum=arg_dict['snapnum'], useCutout=arg_dict['useCutout'])
+        except:
+            return [np.full((rbins_num,),np.nan),]*6+[np.full((rbins_num*2,),0),]*2
     elif arg_dict['simsuite']=='Camels':
         data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0], snapnum=arg_dict['snapnum'])
         data_attrs = data.attrs
