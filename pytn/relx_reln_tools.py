@@ -283,6 +283,18 @@ def get_rel_ratio_conveni_wrap(args):
     # data = h5py.File(os.environ['SCRATCHLOCAL']+f"/halo_data/preread/{halname}.hdf5", 'r')
     # data_attrs = data.attrs
     # print(mtch_pair)
+
+    savedir = os.environ['SCRATCHLOCAL']+f"/adiab-relx/cached/{arg_dict['simsuite']}/"
+    os.makedirs(savedir, exist_ok=True)
+    savepath=savedir+f"{arg_dict['simname']}_{arg_dict['snapnum']}_{int(mtch_pair.ID)}_{int(mtch_pair.ID_dmo)}_{rbins_num}.hdf5"
+    if os.path.exists(savepath):
+        # try:
+            with h5py.File(savepath) as cached_hf:
+                res = cached_hf
+                return (res['MiMf'][:], res['rfri'][:], res['rf_by_R'][:], res['Mdr'][:], res['Mbr'][:], res['Msr'][:], res['Mdr_dmo'][:], res['ri_pre_by_R'][:])
+        # except:
+            # pass
+            # print('exception',savepath)
     data_attrs = None
     if arg_dict['simsuite']=='Eagle':
         data = read_prtcl_hal_pairs_eagle(mtch_pair, arg_dict['simfilename'], arg_dict['simfilename_dmo'], snapnum=arg_dict['snapnum'])
@@ -294,11 +306,13 @@ def get_rel_ratio_conveni_wrap(args):
     elif arg_dict['simsuite']=='Camels':
         data = read_prtcl_hal_pairs_camels(mtch_pair, simname=arg_dict['simname'], simset0=arg_dict['simset'][0], snapnum=arg_dict['snapnum'])
         data_attrs = data.attrs
-
-    return get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'])
+    
+    res = get_rel_ratio(data, data_attrs, sph_gas=sph_gas, rbins_num=rbins_num, range_min_r=range_min_r, warn_noise=arg_dict['warn_noise'], noise_setnan=arg_dict['noise_setnan'], noDicres=0)
+    saveh5_dict(savepath, res)
+    return (res['MiMf'][:], res['rfri'][:], res['rf_by_R'][:], res['Mdr'][:], res['Mbr'][:], res['Msr'][:], res['Mdr_dmo'][:], res['ri_pre_by_R'][:])
     
     
-def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1, range_max_by_Rvir=1):
+def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=None, warn_noise=0, noise_setnan=0, relx_prtcl=1, range_max_by_Rvir=1, noDicres=1):
     noisy=0
     if data_attrs==None: data_attrs = data
     eps_sl, fd, m_prtd, m_prtd_dmo = data_attrs['eps_sl'], data_attrs['fd'], data_attrs['m_prtd'], data_attrs['m_prtd_dmo']
@@ -422,4 +436,8 @@ def get_rel_ratio(data, data_attrs=None, sph_gas=1, rbins_num=30, range_min_r=No
 
     if noise_setnan and noisy: rfri[:] = np.nan
 
-    return (MiMf, rfri, rf/R, Mdr, Mbr, Msr, Mdr_dmo, ri_pre/R)
+    if noDicres:
+        return (MiMf, rfri, rf/R, Mdr, Mbr, Msr, Mdr_dmo, ri_pre/R)
+    
+    resdict = {'MiMf':MiMf, 'rfri':rfri, 'rf_by_R':rf/R, 'Mdr':Mdr, 'Mbr':Mbr, 'Msr':Msr, 'Mdr_dmo':Mdr_dmo, 'ri_pre_by_R':ri_pre/R}
+    return resdict
