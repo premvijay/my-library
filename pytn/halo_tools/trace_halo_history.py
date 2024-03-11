@@ -108,12 +108,15 @@ def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
     if save==True:
         save = os.environ['SCRATCH']+f"/download/IllTNG/{simname}/postprocessing/cutouts/"
     savedirpath = save+f"/snap{snapnum}/"
-    print(snapnum,hal_id,simname)
+    # print(snapnum,hal_id,simname)
     os.makedirs(savedirpath,exist_ok=True)
     savefilepath = savedirpath+f"/hal{hal_id}.hdf5"
     if os.path.exists(savefilepath):
         if os.path.getsize(savefilepath)>10000:
             return
+    # else:
+    #     print(snapnum,hal_id,simname, 'not exist')
+    #     return
     url = f"http://www.tng-project.org/api/{simname}/snapshots/{snapnum}/halos/{hal_id}/cutout.hdf5"
     # r = requests.get(url, headers={"api-key": "73a59b711c03ef63a039a02fad028d52"})
     consize = 0
@@ -131,7 +134,7 @@ def fetch_cutout(snapnum,hal_id,simname='TNG100-1',save=None):
         if save==None:
             return r
         else:
-            print(len(r.content))
+            print(snapnum,hal_id,simname, len(r.content))
             with open(savefilepath, "wb") as f:
                 f.write(r.content)
 
