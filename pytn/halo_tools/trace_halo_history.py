@@ -66,19 +66,35 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         sublink_ind = simfile['Offsets/98/Subhalo/SubLink']['RowNum'][:int(np.max(subhalo_id)+1)][subhalo_id]
         sublink_prelod_len = int(np.max(sublink_ind)+crawl_len+1)
         subln_preload_snapnum = simfile['Trees/SubLink']['SnapNum'][:sublink_prelod_len]
-        # subln_preload_sbhlID = simfile['Trees/SubLink']['SubfindID'][:sublink_prelod_len]
+        subln_preload_sbhlID = simfile['Trees/SubLink']['SubfindID'][:sublink_prelod_len]
+        subln_preload_censbhlID = simfile['Trees/SubLink']['GroupFirstSub'][:sublink_prelod_len]
         subln_preload_hosthlID = simfile['Trees/SubLink']['SubhaloGrNr'][:sublink_prelod_len]
 
-        filter_matchhals_ind = np.where((sublink_ind!=-1) & (subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace))
+        # filter_matchhals_ind = np.where((sublink_ind!=-1) & (subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace))
+        sublink_ind_traced_all = np.linspace(sublink_ind,sublink_ind+crawl_len, crawl_len+1, dtype='int').T
 
-        # subhalo_id_traced = subln_preload_sbhlID[sublink_ind+crawl_len]
         if snapnum_return=='all_across':
-            halo_id_traced = subln_preload_hosthlID[np.linspace(sublink_ind,sublink_ind+crawl_len, crawl_len+1, dtype='int')].T
+            sublink_ind_traced = sublink_ind_traced_all
         else:
-            crawl_len = snapnum_start-snapnum_return
-            halo_id_traced = subln_preload_hosthlID[sublink_ind+crawl_len]
+            crawl_len_ret = snapnum_start-snapnum_return
+            sublink_ind_traced = sublink_ind+crawl_len_ret
         
-        res_list = [halo_id_traced[filter_matchhals_ind], filter_matchhals_ind]
+        filter_insublink = sublink_ind!=-1
+        filter_snapnum =  subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace
+        print(filter_snapnum.sum())
+        filter_snapnum = ~( subln_preload_snapnum[sublink_ind_traced_all]-np.arange(98,snapnum_trace-1,-1) ).astype(bool).any(axis=1)
+        print(filter_snapnum.sum())
+        filter_centrals = subln_preload_censbhlID[sublink_ind+crawl_len]==subln_preload_sbhlID[sublink_ind+crawl_len]
+        print(filter_centrals.sum())
+        filter_centrals = ( subln_preload_censbhlID[sublink_ind_traced_all]==subln_preload_sbhlID[sublink_ind_traced_all] ).all(axis=1)
+        print(filter_centrals.sum())
+
+        filter_matchhals_ind = np.where(filter_insublink & filter_snapnum & filter_centrals)
+        sublink_ind_traced_filt = sublink_ind_traced[filter_matchhals_ind]
+        
+        halo_id_traced = subln_preload_hosthlID[sublink_ind_traced_filt]
+        
+        res_list = [halo_id_traced, filter_matchhals_ind]
         if return_R200c:
             subln_preload_hosthlR200c = simfile['Trees/SubLink']['Group_R_Crit200'][:sublink_prelod_len]
             halo_R200c_traced = subln_preload_hosthlR200c[sublink_ind+crawl_len]
