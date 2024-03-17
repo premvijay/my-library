@@ -55,7 +55,7 @@ def mmp_branch(halosfile, treesdir, upto=1):
 
 
 
-def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True):
+def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True, return_sbhlID=False, return_pos=False):
     halo_id = np.asarray(halo_id)
     if len(halo_id.shape)==0:
         halo_id=halo_id[None]
@@ -97,8 +97,18 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         res_list = [halo_id_traced, filter_matchhals_ind]
         if return_R200c:
             subln_preload_hosthlR200c = simfile['Trees/SubLink']['Group_R_Crit200'][:sublink_prelod_len]
-            halo_R200c_traced = subln_preload_hosthlR200c[sublink_ind+crawl_len]
-            res_list.append(halo_R200c_traced[filter_matchhals_ind])
+            res_extras['hal_R200c'] = subln_preload_hosthlR200c[sublink_ind_traced_filt]
+
+        res_extras = {}
+
+        if return_sbhlID:
+            res_extras['sbhlID'] = subln_preload_sbhlID[sublink_ind_traced_filt]
+
+        if return_pos:
+            subln_preload_hosthlpos = simfile['Trees/SubLink']['GroupPos'][:sublink_prelod_len]
+            res_extras['hal_pos'] = subln_preload_hosthlpos[sublink_ind_traced_filt]
+        
+        res_list.append(res_extras)
 
         # print(filter_matchhals_ind[0].shape)
         # halo_id_start = halo_id[filter_matchhals_ind]
