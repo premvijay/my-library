@@ -55,8 +55,9 @@ def mmp_branch(halosfile, treesdir, upto=1):
 
 
 
-def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True, return_sbhlID=False, return_pos=False):
+def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True, return_M200c=True, return_sbhlID=False, return_pos=False, return_satl_info=False):
     halo_id = np.asarray(halo_id)
+    res_extras = {}
     if len(halo_id.shape)==0:
         halo_id=halo_id[None]
     
@@ -66,8 +67,6 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         sublink_ind = simfile['Offsets/98/Subhalo/SubLink']['RowNum'][:int(np.max(subhalo_id)+1)][subhalo_id]
         sublink_prelod_len = int(np.max(sublink_ind)+crawl_len+1)
         subln_preload_snapnum = simfile['Trees/SubLink']['SnapNum'][:sublink_prelod_len]
-        subln_preload_sbhlID = simfile['Trees/SubLink']['SubfindID'][:sublink_prelod_len]
-        subln_preload_censbhlID = simfile['Trees/SubLink']['GroupFirstSub'][:sublink_prelod_len]
         subln_preload_hosthlID = simfile['Trees/SubLink']['SubhaloGrNr'][:sublink_prelod_len]
 
         # filter_matchhals_ind = np.where((sublink_ind!=-1) & (subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace))
@@ -81,15 +80,11 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         
         filter_insublink = sublink_ind!=-1
         filter_snapnum =  subln_preload_snapnum[sublink_ind+crawl_len]==snapnum_trace
-        print(filter_snapnum.sum())
+        # print(filter_snapnum.sum())
         filter_snapnum = ~( subln_preload_snapnum[sublink_ind_traced_all]-np.arange(98,snapnum_trace-1,-1) ).astype(bool).any(axis=1)
-        print(filter_snapnum.sum())
-        filter_centrals = subln_preload_censbhlID[sublink_ind+crawl_len]==subln_preload_sbhlID[sublink_ind+crawl_len]
-        print(filter_centrals.sum())
-        filter_centrals = ( subln_preload_censbhlID[sublink_ind_traced_all]==subln_preload_sbhlID[sublink_ind_traced_all] ).all(axis=1)
-        print(filter_centrals.sum())
+        # print(filter_snapnum.sum())
 
-        filter_matchhals_ind = np.where(filter_insublink & filter_snapnum & filter_centrals)
+        filter_matchhals_ind = np.where(filter_insublink & filter_snapnum) # & filter_centrals)
         sublink_ind_traced_filt = sublink_ind_traced[filter_matchhals_ind]
         
         halo_id_traced = subln_preload_hosthlID[sublink_ind_traced_filt]
@@ -98,15 +93,26 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         if return_R200c:
             subln_preload_hosthlR200c = simfile['Trees/SubLink']['Group_R_Crit200'][:sublink_prelod_len]
             res_extras['hal_R200c'] = subln_preload_hosthlR200c[sublink_ind_traced_filt]
+        if return_M200c:
+            subln_preload_hosthlM200c = simfile['Trees/SubLink']['Group_M_Crit200'][:sublink_prelod_len]
+            res_extras['hal_M200c'] = subln_preload_hosthlM200c[sublink_ind_traced_filt]
 
-        res_extras = {}
-
+        if return_sbhlID or return_satl_info:
+            subln_preload_sbhlID = simfile['Trees/SubLink']['SubfindID'][:sublink_prelod_len]
+        
         if return_sbhlID:
             res_extras['sbhlID'] = subln_preload_sbhlID[sublink_ind_traced_filt]
 
         if return_pos:
             subln_preload_hosthlpos = simfile['Trees/SubLink']['GroupPos'][:sublink_prelod_len]
             res_extras['hal_pos'] = subln_preload_hosthlpos[sublink_ind_traced_filt]
+        
+        if return_satl_info:
+            subln_preload_censbhlID = simfile['Trees/SubLink']['GroupFirstSub'][:sublink_prelod_len]
+            res_extras['filter_centrals'] = subln_preload_censbhlID[sublink_ind_traced_filt]==subln_preload_sbhlID[sublink_ind_traced_filt]
+            # print(res_extras['filter_centrals'].sum())
+            # res_extras['filter_centrals_persist'] = ( subln_preload_censbhlID[sublink_ind_traced_all]==subln_preload_sbhlID[sublink_ind_traced_all] ).all(axis=1)
+            # print(res_extras['filter_centrals_persist'].sum())
         
         res_list.append(res_extras)
 
