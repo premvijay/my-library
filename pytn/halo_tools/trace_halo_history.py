@@ -55,7 +55,7 @@ def mmp_branch(halosfile, treesdir, upto=1):
 
 
 
-def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_R200c=True, return_M200c=True, return_sbhlID=False, return_pos=False, return_satl_info=False):
+def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_trace=49, snapnum_return='all_across', return_sublink_ind=True, return_R200c=False, return_M200c=False, return_sbhlID=False, return_pos=False, return_satl_info=False):
     halo_id = np.asarray(halo_id)
     res_extras = {}
     if len(halo_id.shape)==0:
@@ -90,6 +90,8 @@ def crawl_illustris(halo_id, simname = 'TNG100-1', snapnum_start=98, snapnum_tra
         halo_id_traced = subln_preload_hosthlID[sublink_ind_traced_filt]
         
         res_list = [halo_id_traced, filter_matchhals_ind]
+        if return_sublink_ind:
+            res_extras['sbln_ind'] = sublink_ind_traced_filt
         if return_R200c:
             subln_preload_hosthlR200c = simfile['Trees/SubLink']['Group_R_Crit200'][:sublink_prelod_len]
             res_extras['hal_R200c'] = subln_preload_hosthlR200c[sublink_ind_traced_filt]
