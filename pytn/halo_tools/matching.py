@@ -11,7 +11,7 @@ def potential_matches(hals1_pos, hals2_pos, hals1_extra, hals2_extra, box_size=1
     t_now = time()
     hals1 = np.append(hals1_pos, hals1_extra, axis=1)
     hals2 = np.append(hals2_pos, hals2_extra, axis=1)
-    kdt = KDTree_sp(hals2, boxsize=[box_size,]*3+[1e8])
+    kdt = KDTree_sp(hals2, boxsize=[box_size+1e-1,]*3+[1e8])
     t_bef, t_now = t_now, time()
     print(t_now-t_bef, 'kdtree constructed')
     # idx21 = kdt.query(hals1_pos, k=20, return_distance=False, dualtree=False)
