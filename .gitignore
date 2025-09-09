@@ -4,3 +4,6 @@ pytn/pm_tools/src/pybind11
 *.so
 *.json
 pytn/pm_tools/build/
+*.exp
+*.obj
+*.lib
